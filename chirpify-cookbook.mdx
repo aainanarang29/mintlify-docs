@@ -1,0 +1,196 @@
+---
+title: "Build an AI Text-to-Speech App with Credit-Based Payments"
+description: "Step-by-step guide to building Chirpify AI — a production TTS service with ElevenLabs + Dodo Payments"
+---
+
+<Note>
+🔗 **[Live Demo](https://chirpify-ai.vercel.app)** · **[Source Code](https://github.com/aainanarang29/chirpify-ai)**
+</Note>
+
+In this tutorial, you'll build **Chirpify AI** — a text-to-speech app where users get 500 free characters, then purchase credit packs ($5 / $10 / $25) via Dodo Payments to keep generating speech.
+
+**What you'll build:**
+- 5 AI voices powered by ElevenLabs Multilingual v2
+- Credit-based billing with 3 pricing tiers via Dodo Payments
+- Claymorphism UI with waveform audio player
+- Full Vercel deployment
+
+**Tech Stack:** Node.js + Express · ElevenLabs API · Dodo Payments · Vercel
+
+## Architecture
+
+```
+Browser (UI) ──▶ Express API (Vercel) ──▶ ElevenLabs TTS
+    │
+    │ Buy Credits
+    ▼
+Dodo Payments Checkout ──▶ Redirect back with credits
+```
+
+## Step 1: Create Credit Products in Dodo Payments
+
+We're using a **credit-pack model** — users buy character bundles upfront. Create 3 one-time products in your [Dodo dashboard](https://dashboard.dodopayments.com):
+
+| Pack | Characters | Price | Cost per 1K chars |
+|------|-----------|-------|--------------------|
+| 🌱 Starter | 10,000 | $5 | $0.50 |
+| ⚡ Pro | 50,000 | $10 | $0.20 |
+| 🚀 Power | 200,000 | $25 | $0.125 |
+
+The volume discount incentivizes upgrading — Power is **4x cheaper** per character than Starter.
+
+<Tip>
+Save each Product ID (e.g. `pdt_0NZCiIwZqFmmRpNK6z00J`) — you'll need them in the checkout endpoint.
+</Tip>
+
+## Step 2: Build the TTS Backend
+
+Initialize your project and install dependencies:
+
+```bash
+mkdir chirpify-ai && cd chirpify-ai
+npm init -y
+npm install express @elevenlabs/elevenlabs-js
+```
+
+The Express server exposes two endpoints — `GET /api/voices` returns available voices, and `POST /api/speak` generates audio:
+
+```javascript server.mjs
+app.post("/api/speak", async (req, res) => {
+  const { text, voice } = req.body;
+  if (text.length > 500) return res.status(400).json({ error: "Max 500 characters." });
+
+  const audio = await client.textToSpeech.convert(VOICES[voice].id, {
+    text, model_id: "eleven_multilingual_v2"
+  });
+
+  const chunks = [];
+  for await (const chunk of audio) chunks.push(chunk);
+
+  res.json({
+    audio: Buffer.concat(chunks).toString("base64"),
+    characters: text.length,
+    voice: VOICES[voice].name
+  });
+});
+```
+
+<Card title="Full server.mjs" icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/server.mjs">
+  View the complete server file on GitHub
+</Card>
+
+## Step 3: Create the Dodo Payments Checkout Endpoint
+
+This serverless function creates a Dodo Payments session when a user clicks a pricing tier:
+
+```javascript api/checkout.js
+const response = await fetch(`${baseUrl}/payments`, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.DODO_PAYMENTS_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    billing: { country: 'US' },
+    customer: { email: userEmail, name: userName },
+    payment_link: true,
+    product_cart: [{ product_id: productId, quantity: 1 }],
+    return_url: 'https://chirpify-ai.vercel.app',
+  }),
+});
+
+const data = await response.json();
+res.json({ checkout_url: data.payment_link });
+```
+
+<Card title="Full api/checkout.js" icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/api/checkout.js">
+  View the complete checkout endpoint on GitHub
+</Card>
+
+## Step 4: Wire Up the Frontend
+
+The UI tracks character balance client-side with a color-coded badge:
+
+```javascript index.html
+let charBalance = parseInt(localStorage.getItem('chirpify_balance') || '500');
+
+function updateBadge() {
+  const badge = document.getElementById('credit-badge');
+  badge.textContent = `${charBalance.toLocaleString()} chars`;
+  badge.style.background =
+    charBalance > 200 ? '#34d399' :  // Green
+    charBalance > 0   ? '#fbbf24' :  // Yellow
+                        '#f87171';   // Red — triggers "Buy Credits" modal
+}
+```
+
+When balance hits zero, generation is blocked and the pricing modal opens — each tier button calls `/api/checkout` with the corresponding Dodo product ID.
+
+<Card title="Full index.html" icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/public/index.html">
+  View the complete frontend on GitHub
+</Card>
+
+## Step 5: Deploy to Vercel
+
+```bash
+git init && echo "node_modules/" > .gitignore
+git add . && git commit -m "Chirpify AI with Dodo Payments"
+git remote add origin https://github.com/YOUR_USERNAME/chirpify-ai.git
+git push -u origin main
+```
+
+Import the repo on [vercel.com](https://vercel.com) and add these environment variables:
+
+| Variable | Value |
+|----------|-------|
+| `ELEVENLABS_KEY` | Your ElevenLabs API key |
+| `DODO_PAYMENTS_API_KEY` | Your Dodo Payments API key |
+| `DODO_ENV` | `test` (or `live` for production) |
+
+Click **Deploy** — done! 🎉
+
+## Billing Flow
+
+<Steps>
+  <Step title="Land on app">
+    500 free characters loaded automatically
+  </Step>
+  <Step title="Generate speech">
+    Characters deducted from balance after each generation
+  </Step>
+  <Step title="Balance hits zero">
+    "Buy Credits" modal shown, generation blocked
+  </Step>
+  <Step title="Pick a pack">
+    Dodo Payments checkout session created via API
+  </Step>
+  <Step title="Payment complete">
+    Redirect back to app, credits added to balance
+  </Step>
+</Steps>
+
+## Going Further
+
+<CardGroup cols={2}>
+  <Card title="Server-side balance" icon="database">
+    Replace localStorage with a database + Dodo webhooks (payment.succeeded)
+  </Card>
+  <Card title="User authentication" icon="lock">
+    Persist balances across devices with login
+  </Card>
+  <Card title="Webhook verification" icon="shield-check">
+    Validate Dodo webhook signatures for security
+  </Card>
+  <Card title="Rate limiting" icon="gauge">
+    Protect your ElevenLabs API quota from abuse
+  </Card>
+</CardGroup>
+
+## Resources
+
+| | Link |
+|--|------|
+| **Live Demo** | [chirpify-ai.vercel.app](https://chirpify-ai.vercel.app) |
+| **Source Code** | [github.com/aainanarang29/chirpify-ai](https://github.com/aainanarang29/chirpify-ai) |
+| **Dodo Payments Docs** | [docs.dodopayments.com](https://docs.dodopayments.com) |
+| **ElevenLabs API** | [elevenlabs.io/docs](https://elevenlabs.io/docs) |
