@@ -44,7 +44,13 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
-          }
+          },
+      {
+        "group": "Cookbooks",
+        "pages": [
+          "chirpify-cookbook"
+        ]
+      }
         ]
       },
       {
