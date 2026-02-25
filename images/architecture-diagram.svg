@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500">
+  <defs>
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d9488;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#60a5fa;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="500" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="bold" fill="#1e293b">Chirpify AI Architecture</text>
+
+  <!-- Frontend Box -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="80" width="180" height="120" rx="12" fill="url(#tealGrad)"/>
+    <text x="140" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="white">Frontend</text>
+    <text x="140" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">HTML / CSS / JS</text>
+    <text x="140" y="175" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="white" opacity="0.8">Claymorphic UI</text>
+  </g>
+
+  <!-- Vercel Functions Box -->
+  <g filter="url(#shadow)">
+    <rect x="360" y="80" width="180" height="120" rx="12" fill="url(#purpleGrad)"/>
+    <text x="450" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="white">Vercel Functions</text>
+    <text x="450" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">/api/speak</text>
+    <text x="450" y="175" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">/api/checkout</text>
+  </g>
+
+  <!-- ElevenLabs Box -->
+  <g filter="url(#shadow)">
+    <rect x="670" y="80" width="180" height="120" rx="12" fill="url(#blueGrad)"/>
+    <text x="760" y="130" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="white">ElevenLabs</text>
+    <text x="760" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">Text-to-Speech API</text>
+    <text x="760" y="175" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="white" opacity="0.8">5 Voice Options</text>
+  </g>
+
+  <!-- localStorage Box -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="300" width="180" height="120" rx="12" fill="#64748b"/>
+    <text x="140" y="350" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="white">localStorage</text>
+    <text x="140" y="375" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">Credit Balance</text>
+    <text x="140" y="395" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="white" opacity="0.8">500 free chars</text>
+  </g>
+
+  <!-- Dodo Payments Box -->
+  <g filter="url(#shadow)">
+    <rect x="360" y="300" width="180" height="120" rx="12" fill="url(#orangeGrad)"/>
+    <text x="450" y="350" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="white">Dodo Payments</text>
+    <text x="450" y="375" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">Checkout & Billing</text>
+    <text x="450" y="395" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="white" opacity="0.8">3 Credit Packs</text>
+  </g>
+
+  <!-- User Icon Box -->
+  <g filter="url(#shadow)">
+    <rect x="670" y="300" width="180" height="120" rx="12" fill="#10b981"/>
+    <text x="760" y="350" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="white">User</text>
+    <text x="760" y="375" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="white" opacity="0.9">Types text</text>
+    <text x="760" y="395" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="white" opacity="0.8">Buys credits</text>
+  </g>
+
+  <!-- Arrows -->
+  <!-- Frontend to Vercel -->
+  <path d="M230 140 L355 140" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- Vercel to ElevenLabs -->
+  <path d="M540 140 L665 140" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+  <!-- Frontend to localStorage -->
+  <path d="M140 200 L140 295" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+  <!-- Vercel to Dodo -->
+  <path d="M450 200 L450 295" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+  <!-- User to Frontend -->
+  <path d="M670 360 L560 360 L560 250 L230 250 L230 200" stroke="#475569" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+
+  <!-- Dodo to User (redirect) -->
+  <path d="M540 360 L665 360" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="5,5"/>
+
+  <!-- Labels on arrows -->
+  <text x="290" y="130" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">API calls</text>
+  <text x="600" y="130" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">TTS request</text>
+  <text x="155" y="250" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">store credits</text>
+  <text x="465" y="250" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">create payment</text>
+  <text x="590" y="350" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">redirect</text>
+
+  <!-- Legend -->
+  <rect x="50" y="450" width="12" height="12" rx="2" fill="#475569"/>
+  <text x="70" y="460" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">Data flow</text>
+  <line x1="130" y1="456" x2="170" y2="456" stroke="#475569" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="180" y="460" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">User interaction</text>
+</svg>
