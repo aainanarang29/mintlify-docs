@@ -74,6 +74,71 @@ The more you buy, the cheaper it gets. A straightforward volume discount where u
 
 ---
 
+## Project Setup
+
+```bash
+mkdir chirpify-ai
+cd chirpify-ai
+npm init -y
+npm install @elevenlabs/elevenlabs-js express
+```
+
+Your `package.json` should look like this:
+
+```json package.json
+{
+  "name": "chirpify-ai",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.36.0",
+    "express": "^5.2.1"
+  }
+}
+```
+
+Create a `.env` file in your project root:
+
+```bash .env
+# Dodo Payments
+DODO_PAYMENTS_API_KEY=sk_test_your_test_key_here
+DODO_ENV=test
+DODO_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# ElevenLabs
+ELEVENLABS_KEY=xi_your_elevenlabs_key_here
+
+# App URL (update for production)
+SITE_URL=http://localhost:3000
+```
+
+<Warning>
+  Never commit `.env` to version control. Add it to your `.gitignore` immediately.
+</Warning>
+
+Set up the directory structure:
+
+```
+chirpify-ai/
+  api/
+    customer.js
+    balance.js
+    checkout.js
+    speak.js
+    webhook.js
+  public/
+    index.html
+  server.mjs
+  package.json
+  vercel.json
+  .env
+```
+
+---
+
 ## Step 1: Set Up Products in Dodo
 
 Before writing any code, you need three products in Dodo — one for each credit pack. Two ways to do this.
@@ -271,10 +336,15 @@ Two key differences from a basic integration:
 
 ## Step 3: Handle Payment Success with Webhooks
 
-After checkout, Dodo fires a `payment.succeeded` webhook to your server. Your handler maps the purchased product to a character count and credits the customer's wallet. No URL params, no localStorage — the server is the source of truth.
+After checkout, Dodo fires a `payment.succeeded` webhook to your server. Your handler verifies the signature, maps the purchased product to a character count, and credits the customer's wallet. No URL params, no localStorage — the server is the source of truth.
+
+Dodo webhooks use the [Standard Webhooks](https://www.standardwebhooks.com/) format (Svix). Each request includes three headers: `webhook-id`, `webhook-timestamp`, and `webhook-signature`. You **must** verify the signature before trusting the payload — otherwise anyone can POST fake events to your endpoint and credit themselves unlimited characters.
 
 ```javascript api/webhook.js
+import crypto from 'crypto';
+
 const DODO_API_KEY = process.env.DODO_PAYMENTS_API_KEY;
+const DODO_WEBHOOK_SECRET = process.env.DODO_WEBHOOK_SECRET;
 const DODO_BASE_URL = process.env.DODO_ENV === 'live'
   ? 'https://live.dodopayments.com'
   : 'https://test.dodopayments.com';
@@ -286,18 +356,53 @@ const PRODUCT_CREDITS = {
   'pdt_YOUR_POWER_ID':   200000,  // Power Pack
 };
 
+// Verify Dodo webhook signature (Standard Webhooks / Svix format)
+function verifyWebhookSignature(body, headers) {
+  const webhookId = headers['webhook-id'];
+  const webhookTimestamp = headers['webhook-timestamp'];
+  const webhookSignature = headers['webhook-signature'];
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    throw new Error('Missing webhook signature headers');
+  }
+
+  // Reject webhooks older than 5 minutes to prevent replay attacks
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(webhookTimestamp)) > 300) {
+    throw new Error('Webhook timestamp too old');
+  }
+
+  // The signed content is: "{webhook-id}.{webhook-timestamp}.{body}"
+  const signedContent = `${webhookId}.${webhookTimestamp}.${typeof body === 'string' ? body : JSON.stringify(body)}`;
+
+  // Decode the secret (strip the "whsec_" prefix, then base64-decode)
+  const secretBytes = Buffer.from(DODO_WEBHOOK_SECRET.replace('whsec_', ''), 'base64');
+
+  // Compute the expected signature
+  const expectedSignature = crypto
+    .createHmac('sha256', secretBytes)
+    .update(signedContent)
+    .digest('base64');
+
+  // The header can contain multiple signatures (e.g., "v1,abc123 v1,def456")
+  const passedSignatures = webhookSignature.split(' ').map(sig => sig.split(',')[1]);
+
+  if (!passedSignatures.some(sig => sig === expectedSignature)) {
+    throw new Error('Invalid webhook signature');
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Validate webhook signature headers
-  const webhookId = req.headers['webhook-id'];
-  const webhookTimestamp = req.headers['webhook-timestamp'];
-  const webhookSignature = req.headers['webhook-signature'];
-
-  if (!webhookId || !webhookTimestamp || !webhookSignature) {
-    return res.status(400).json({ error: 'Missing webhook signature headers' });
+  // Step 1: Verify the webhook signature
+  try {
+    verifyWebhookSignature(req.body, req.headers);
+  } catch (err) {
+    console.error('Webhook verification failed:', err.message);
+    return res.status(401).json({ error: 'Invalid webhook signature' });
   }
 
   const event = req.body;
@@ -322,7 +427,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Credit the customer's wallet
+    // Step 2: Credit the customer's wallet
     const walletRes = await fetch(
       `${DODO_BASE_URL}/customers/${customerId}/wallets/ledger-entries`,
       {
@@ -353,10 +458,12 @@ export default async function handler(req, res) {
 }
 ```
 
-The `idempotency_key` is critical — Dodo retries failed webhooks, and using `paymentId` ensures the wallet is only credited once per payment.
+Two things keep this handler secure:
+1. **Signature verification** — the `verifyWebhookSignature` function rejects any request that wasn't signed by Dodo. Without this, anyone could POST a fake `payment.succeeded` event and credit themselves unlimited characters.
+2. **`idempotency_key`** — using `paymentId` ensures the wallet is only credited once per payment, even if Dodo retries the webhook.
 
 <Info>
-  Register your webhook URL in the [Dodo Dashboard](https://dashboard.dodopayments.com) under **Webhooks**. Set the URL to `https://your-app.vercel.app/api/webhook` and filter for `payment.succeeded` events.
+  Register your webhook URL in the [Dodo Dashboard](https://dashboard.dodopayments.com) under **Webhooks**. Set the URL to `https://your-app.vercel.app/api/webhook` and filter for `payment.succeeded` events. Copy the **signing secret** (starts with `whsec_`) and add it as `DODO_WEBHOOK_SECRET` in your environment variables.
 </Info>
 
 ---
@@ -603,12 +710,13 @@ export default async function handler(req, res) {
 
 Add these in Vercel under **Settings > Environment Variables**:
 
-| Variable                | What it does                        | Example                          |
-| ----------------------- | ----------------------------------- | -------------------------------- |
-| `DODO_PAYMENTS_API_KEY` | Authenticates with Dodo             | `sk_test_...`                    |
-| `DODO_ENV`              | Switches test/live                  | `test`                           |
-| `ELEVENLABS_KEY`        | Authenticates with ElevenLabs       | `xi_...`                         |
-| `SITE_URL`              | Your app URL (for return redirects) | `https://chirpify-ai.vercel.app` |
+| Variable                | What it does                            | Example                          |
+| ----------------------- | --------------------------------------- | -------------------------------- |
+| `DODO_PAYMENTS_API_KEY` | Authenticates with Dodo                 | `sk_test_...`                    |
+| `DODO_ENV`              | Switches test/live                      | `test`                           |
+| `DODO_WEBHOOK_SECRET`   | Verifies webhook signatures from Dodo   | `whsec_...`                      |
+| `ELEVENLABS_KEY`        | Authenticates with ElevenLabs           | `xi_...`                         |
+| `SITE_URL`              | Your app URL (for return redirects)     | `https://chirpify-ai.vercel.app` |
 
 ### Configure Webhooks
 
