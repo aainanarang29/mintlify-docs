@@ -5,7 +5,7 @@ description: "Build a production-ready TTS app with ElevenLabs and Dodo Payments
 
 # [Chirpify AI: Text-to-Speech with Per-Character Billing](https://chirpify-ai.vercel.app/)
 
-By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it — with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by webhooks.
+By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it - with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by webhooks.
 
 <video src="/videos/Astute_Platinum_Saga-1.mp4" controls={true} />
 
@@ -21,8 +21,8 @@ By the end of this cookbook, you'll have a fully deployed text-to-speech app tha
 - **Freemium model** with 500 free characters on first visit, no signup needed
 - **Three credit packs**: Starter (10K), Pro (50K), Power (200K) characters
 - **Dodo Payments checkout** with real payment links, receipts, and test mode for dev
-- **Server-side credit tracking** with Dodo Wallets — tamper-proof, auditable, no database needed
-- **Webhook-powered fulfillment** — credits added to wallet only after confirmed payment
+- **Server-side credit tracking** with Dodo Wallets - tamper-proof, auditable, no database needed
+- **Webhook-powered fulfillment** - credits added to wallet only after confirmed payment
 - **One-command deploy** with `vercel --prod`
 
 Total cost to build and host: **\$0**.
@@ -31,7 +31,7 @@ Total cost to build and host: **\$0**.
 
 ## Architecture
 
-Four layers. Your **frontend** talks to **Vercel serverless functions** that do three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed — Dodo Wallets are the source of truth.
+Four layers. Your **frontend** talks to **Vercel serverless functions** that do three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed - Dodo Wallets are the source of truth.
 
 **Frontend** → **Vercel Serverless Functions** → **ElevenLabs TTS API**
 
@@ -147,7 +147,7 @@ chirpify-ai/
 
 ## Step 1: Set Up Products in Dodo
 
-Before writing any code, you need three products in Dodo — one for each credit pack. Two ways to do this.
+Before writing any code, you need three products in Dodo - one for each credit pack. Two ways to do this.
 
 ### Option A: The Dashboard (2 minutes, no code)
 
@@ -265,7 +265,7 @@ export default async function handler(req, res) {
 }
 ```
 
-The `customer_id` gets stored in `localStorage` — but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
+The `customer_id` gets stored in `localStorage` - but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
 
 ### Checkout Implementation
 
@@ -331,9 +331,9 @@ export default async function handler(req, res) {
 ```
 
 Three things to note:
-1. **`customer: { customer_id: customerId }`** — links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
-2. **No `characters` in the return URL** — credits are added server-side via webhook, not client-side via URL params.
-3. **`billing: { country: 'US' }`** — hardcoded for the demo. In production, collect the user's actual country so Dodo calculates the correct tax.
+1. **`customer: { customer_id: customerId }`** - links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
+2. **No `characters` in the return URL** - credits are added server-side via webhook, not client-side via URL params.
+3. **`billing: { country: 'US' }`** - hardcoded for the demo. In production, collect the user's actual country so Dodo calculates the correct tax.
 
 <Warning>
   **Always include `payment_link: true`.** Without it, `payment_link` comes back `null` and the checkout button won't work. This is the most common integration issue.
@@ -343,9 +343,9 @@ Three things to note:
 
 ## Step 3: Handle Payment Success with Webhooks
 
-After checkout, Dodo fires a `payment.succeeded` webhook to your server. Your handler verifies the signature, maps the purchased product to a character count, and credits the customer's wallet. No URL params, no localStorage — the server is the source of truth.
+After checkout, Dodo fires a `payment.succeeded` webhook to your server. Your handler verifies the signature, maps the purchased product to a character count, and credits the customer's wallet. No URL params, no localStorage - the server is the source of truth.
 
-Dodo webhooks use the [Standard Webhooks](https://www.standardwebhooks.com/) format (Svix). Each request includes three headers: `webhook-id`, `webhook-timestamp`, and `webhook-signature`. You **must** verify the signature before trusting the payload — otherwise anyone can POST fake events to your endpoint and credit themselves unlimited characters.
+Dodo webhooks use the [Standard Webhooks](https://www.standardwebhooks.com/) format (Svix). Each request includes three headers: `webhook-id`, `webhook-timestamp`, and `webhook-signature`. You **must** verify the signature before trusting the payload - otherwise anyone can POST fake events to your endpoint and credit themselves unlimited characters.
 
 ```javascript api/webhook.js
 import crypto from 'crypto';
@@ -466,8 +466,8 @@ export default async function handler(req, res) {
 ```
 
 Two things keep this handler secure:
-1. **Signature verification** — the `verifyWebhookSignature` function rejects any request that wasn't signed by Dodo. Without this, anyone could POST a fake `payment.succeeded` event and credit themselves unlimited characters.
-2. **`idempotency_key`** — using `paymentId` ensures the wallet is only credited once per payment, even if Dodo retries the webhook.
+1. **Signature verification** - the `verifyWebhookSignature` function rejects any request that wasn't signed by Dodo. Without this, anyone could POST a fake `payment.succeeded` event and credit themselves unlimited characters.
+2. **`idempotency_key`** - using `paymentId` ensures the wallet is only credited once per payment, even if Dodo retries the webhook.
 
 <Note>
   The signature is computed over the raw request body. Vercel's default body parser delivers `req.body` as a parsed object, so the code re-serializes it with `JSON.stringify`. This works for Dodo payloads, but for bulletproof verification in high-stakes apps, use a [custom body parser](https://vercel.com/docs/functions/runtimes#advanced-usage) to capture the raw bytes and sign against those instead.
@@ -481,7 +481,7 @@ Two things keep this handler secure:
 
 ## Step 4: Track Usage and Deduct Credits (Server-Side)
 
-Every TTS request goes through the server, which checks the Dodo wallet balance before calling ElevenLabs and debits only after a successful generation. Users can't manipulate their balance — Dodo's wallet is the single source of truth.
+Every TTS request goes through the server, which checks the Dodo wallet balance before calling ElevenLabs and debits only after a successful generation. Users can't manipulate their balance - Dodo's wallet is the single source of truth.
 
 ```javascript api/speak.js
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
@@ -782,7 +782,7 @@ If the wallet ledger shows every transaction and the balance matches, you've got
   </Card>
 
   <Card icon="database" title="Dodo Wallets = Server-Side Credits">
-    Wallet ledger entries give you tamper-proof, auditable credit tracking. No database needed — Dodo is your source of truth.
+    Wallet ledger entries give you tamper-proof, auditable credit tracking. No database needed - Dodo is your source of truth.
   </Card>
 
   <Card icon="rotate-right" title="Webhooks + Idempotency Keys">
