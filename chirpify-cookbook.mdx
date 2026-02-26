@@ -1,13 +1,11 @@
 ---
 title: "Build a Text-to-Speech App with Per-Character Billing"
-description: "Ship a production-ready TTS app with ElevenLabs and Dodo Payments. Free tier, credit packs, checkout -- the whole thing in under an hour."
+description: "Build a production-ready TTS app with ElevenLabs and Dodo Payments, complete with a free tier, credit packs, and checkout."
 ---
 
 # Chirpify AI: Text-to-Speech with Per-Character Billing
 
-Most TTS tutorials stop at "call the API and play audio." This one doesn't.
-
-By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay you for it -- with a freemium model, three credit tiers, and a real checkout flow. The kind of thing you'd actually put a domain on.
+By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it, with a freemium model, three credit tiers, and a real checkout flow.
 
 <img src="/images/chirpify-demo.png" alt="Chirpify AI Demo" />
 
@@ -17,16 +15,14 @@ By the end of this cookbook, you'll have a fully deployed text-to-speech app tha
 
 ---
 
-## What You'll Ship
+## What You'll Build
 
-Not a toy. Not a tutorial that "leaves the rest as an exercise." An actual product:
-
-- **ElevenLabs TTS** with 5 voice options -- type text, hear it spoken back
-- **Freemium model** -- 500 free characters on first visit, no signup needed
-- **Three credit packs** -- Starter (10K), Pro (50K), Power (200K) characters
-- **Dodo Payments checkout** -- real payment links, real receipts, test mode for dev
-- **Live credit tracking** -- balance updates in real-time, color-coded warnings when running low
-- **One-command deploy** -- `vercel --prod` and you're live
+- **ElevenLabs TTS** with 5 voice options: type text, hear it spoken back
+- **Freemium model** with 500 free characters on first visit, no signup needed
+- **Three credit packs**: Starter (10K), Pro (50K), Power (200K) characters
+- **Dodo Payments checkout** with real payment links, receipts, and test mode for dev
+- **Live credit tracking** with real-time balance updates and color-coded warnings when running low
+- **One-command deploy** with `vercel --prod`
 
 Total cost to build and host: **$0**.
 
@@ -38,18 +34,18 @@ Total cost to build and host: **$0**.
 
 <img src="/images/architecture-diagram.svg" alt="Architecture: Frontend → Vercel Edge Functions → ElevenLabs TTS API, with localStorage for credits and Dodo Payments for checkout" />
 
-Three layers, zero complexity. Your **frontend** talks to **Vercel serverless functions** that do two things: hit ElevenLabs for audio generation and hit Dodo for payment sessions. Credits live in `localStorage` -- simple, instant, no database needed for the demo.
+Three layers. Your **frontend** talks to **Vercel serverless functions** that do two things: call ElevenLabs for audio generation and call Dodo for payment sessions. Credits live in `localStorage`, which keeps things simple with no database needed for the demo.
 
 <Accordion title="Full tech stack">
 
 | Layer | Technology | Why |
 | --- | --- | --- |
-| Frontend | HTML5, CSS3, vanilla JS | No framework overhead. Ships fast. |
-| Backend | Node.js 18+, Vercel Serverless | Two API routes. That's it. |
-| TTS | ElevenLabs API | Best-in-class voices. Free tier = 10K chars/month. |
-| Payments | Dodo Payments | One API call to create a payment link. Handles tax, receipts, everything. |
-| Hosting | Vercel | Push to GitHub, it's live. SSL included. |
-| State | localStorage | Good enough for a demo. Swap for a DB when you're ready. |
+| Frontend | HTML5, CSS3, vanilla JS | No framework overhead. Loads fast. |
+| Backend | Node.js 18+, Vercel Serverless | Two API routes total. |
+| TTS | ElevenLabs API | High-quality voices. Free tier includes 10K chars/month. |
+| Payments | Dodo Payments | One API call to create a payment link. Handles tax, receipts, and more. |
+| Hosting | Vercel | Push to GitHub and it's live. SSL included. |
+| State | localStorage | Works well for a demo. Swap for a DB when you're ready to scale. |
 
 </Accordion>
 
@@ -65,13 +61,13 @@ Chirpify uses the same model as ElevenLabs, Resend, and most usage-based SaaS: b
 | 🔵 Pro | 50,000 | $10 | $0.20 | Regular use |
 | 🟣 Power | 200,000 | $25 | $0.125 | Volume users |
 
-The more you buy, the cheaper it gets. Classic volume discount -- nothing fancy, but it works because users self-select into the tier that matches their usage.
+The more you buy, the cheaper it gets. A straightforward volume discount where users self-select into the tier that matches their usage.
 
 ---
 
 ## Step 1: Set Up Products in Dodo
 
-Before writing any code, you need three products in Dodo -- one for each credit pack. Two ways to do this.
+Before writing any code, you need three products in Dodo, one for each credit pack. There are two ways to do this.
 
 ### Option A: The Dashboard (2 minutes, no code)
 
@@ -89,13 +85,13 @@ Before writing any code, you need three products in Dodo -- one for each credit 
 
 <Steps>
   <Step title="Grab your API key">
-    Head to your [Dodo Payments Dashboard](https://dashboard.dodopayments.com) → **API Keys** → generate a new key. Stash it somewhere safe. You'll need it in Step 2.
+    Head to your [Dodo Payments Dashboard](https://dashboard.dodopayments.com), go to **API Keys**, and generate a new key. Save it somewhere safe. You'll need it in Step 2.
   </Step>
   <Step title="Create the Starter Pack">
     **Products → Create Product**. Name it "Starter Pack", set the price to $5.00 USD, type to one-time payment, tax category to Digital Products. Hit **Create**, copy the `product_id`. Done.
   </Step>
   <Step title="Repeat for Pro and Power">
-    Same flow. Pro Pack = $10 (50K characters). Power Pack = $25 (200K characters). Save all three `product_id` values -- you'll plug them into your checkout API next.
+    Same flow. Pro Pack = $10 (50K characters). Power Pack = $25 (200K characters). Save all three `product_id` values. You'll plug them into your checkout API next.
   </Step>
 </Steps>
 
@@ -120,7 +116,7 @@ curl -X POST "https://test.dodopayments.com/products" \
 ```
 
 <Card title="All three cURL commands" icon="github" href="https://github.com/aainanarang29/chirpify-ai#create-products">
-  Starter, Pro, and Power pack creation -- copy, paste, run.
+  Starter, Pro, and Power pack creation. Copy, paste, run.
 </Card>
 
 <Info>
@@ -131,13 +127,13 @@ curl -X POST "https://test.dodopayments.com/products" \
 
 ## Step 2: Build the Checkout API
 
-User clicks "Buy" → your API creates a Dodo payment → user gets redirected to a hosted checkout page → pays → lands back on your app with credits added. One serverless function handles the whole thing.
+When a user clicks "Buy", your API creates a Dodo payment, the user gets redirected to a hosted checkout page, pays, and lands back on your app with credits added. One serverless function handles the entire flow.
 
 {/* 🎨 EXCALIDRAW DIAGRAM #2: Payment Flow */}
 
 <img src="/images/payment-flow.svg" alt="Payment flow: User clicks Buy → Frontend calls /api/checkout → Dodo returns checkout link → User pays → Redirects back → Credits added" />
 
-Here's the core of `api/checkout.js` -- the part that actually talks to Dodo:
+Here's the core of `api/checkout.js`, the part that talks to Dodo:
 
 ```javascript api/checkout.js
 const PRODUCTS = {
@@ -146,7 +142,7 @@ const PRODUCTS = {
   power:   { id: 'pdt_YOUR_POWER_ID',   characters: 200000 },
 };
 
-// The money shot -- one API call, one payment link
+// One API call creates the payment link
 const response = await fetch(`${DODO_BASE_URL}/payments`, {
   method: 'POST',
   headers: {
@@ -154,7 +150,7 @@ const response = await fetch(`${DODO_BASE_URL}/payments`, {
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    payment_link: true, // ← Miss this and you get null. Ask me how I know.
+    payment_link: true, // Required. Without this, payment_link returns null.
     billing: { city: 'San Francisco', country: 'US', state: 'CA', street: '123 Main St', zipcode: '94102' },
     customer: { email: 'customer@example.com', name: 'Customer' },
     product_cart: [{ product_id: product.id, quantity: 1 }],
@@ -164,18 +160,18 @@ const response = await fetch(`${DODO_BASE_URL}/payments`, {
 ```
 
 <Card title="Full checkout handler" icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/api/checkout.js">
-  Error handling, env switching, response parsing -- the production-ready version.
+  Includes error handling, env switching, and response parsing.
 </Card>
 
 <Warning>
-**`payment_link: true` is non-negotiable.** Without it, `payment_link` comes back `null` and your users stare at a broken button. This is the #1 integration gotcha.
+**Always include `payment_link: true`.** Without it, `payment_link` comes back `null` and the checkout button won't work. This is the most common integration issue.
 </Warning>
 
 ---
 
 ## Step 3: Handle Payment Success
 
-After checkout, Dodo bounces users back to your `return_url` with the query params you baked in. Your frontend grabs them and tops up the balance. Simple URL parsing, no webhooks needed for the demo.
+After checkout, Dodo redirects users back to your `return_url` with the query params you included. Your frontend parses them and tops up the balance. No webhooks needed for the demo.
 
 ```javascript
 const urlParams = new URLSearchParams(window.location.search);
@@ -193,7 +189,7 @@ if (urlParams.get('success') === 'true') {
 ```
 
 <Note>
-For production, don't trust URL params alone. Set up [Dodo webhooks](https://docs.dodopayments.com) for server-side payment verification. URL params are fine for demos, sketchy for real money.
+For production, don't rely on URL params alone. Set up [Dodo webhooks](https://docs.dodopayments.com) for server-side payment verification. URL params work for demos but aren't secure enough for real transactions.
 </Note>
 
 ---
@@ -243,14 +239,14 @@ async function generateSpeech(text, voice) {
 
 ## Step 5: Build the Pricing UI
 
-When credits run dry, hit them with a clean upgrade modal. Three cards, three price points, one click to checkout.
+When credits run out, show a clean upgrade modal. Three cards, three price points, one click to checkout.
 
 <img src="/images/chirpify-pricing-modal.png" alt="Chirpify pricing modal" />
 
 Each card carries a `data-pack` attribute that maps to your product config. Click fires `/api/checkout`, response comes back with a Dodo checkout URL, `window.location.href` does the rest. No modals-within-modals, no multi-step forms. Click, pay, done.
 
 <Card title="Pricing modal markup + handlers" icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/public/index.html">
-  HTML structure, click handlers, loading states -- ready to drop into your project.
+  HTML structure, click handlers, and loading states. Ready to drop into your project.
 </Card>
 
 ---
@@ -273,7 +269,7 @@ function updateCreditsDisplay() {
 }
 ```
 
-Small thing, big impact. Users who can see their balance spend more confidently -- and buy more when it's low.
+Showing the balance gives users confidence in their spending and a clear signal when it's time to top up.
 
 ---
 
@@ -308,7 +304,7 @@ const base64Audio = Buffer.from(audioBuffer).toString('base64');
 ```
 
 <Card title="Full ElevenLabs handler" icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/api/speak.js">
-  Validation, error handling, voice fallbacks -- the complete `api/speak.js`.
+  Validation, error handling, and voice fallbacks. The complete `api/speak.js`.
 </Card>
 
 ---
@@ -317,7 +313,7 @@ const base64Audio = Buffer.from(audioBuffer).toString('base64');
 
 ### Environment Variables
 
-Drop these into Vercel under **Settings → Environment Variables**:
+Add these in Vercel under **Settings > Environment Variables**:
 
 | Variable | What it does | Example |
 | --- | --- | --- |
@@ -326,14 +322,14 @@ Drop these into Vercel under **Settings → Environment Variables**:
 | `ELEVENLABS_API_KEY` | Authenticates with ElevenLabs | `xi_...` |
 | `SITE_URL` | Your app URL (for return redirects) | `https://chirpify-ai.vercel.app` |
 
-### Ship It
+### Deploy
 
 ```bash
 npm install -g vercel
 vercel --prod
 ```
 
-Two commands. That's the whole deploy.
+Two commands and you're live.
 
 <Accordion title="vercel.json (if you need it)">
 
@@ -361,7 +357,7 @@ Dodo's test mode gives you a fake card that always succeeds:
 | CVC | Any 3 digits |
 | ZIP | Any 5 digits |
 
-**The golden path to verify:** Load the app → use your free 500 chars → run out → pricing modal pops → buy Starter Pack with test card → get redirected back → see 10K chars in your balance → generate more speech → refresh the page → balance persists.
+**Full test flow:** Load the app, use your free 500 characters, run out, see the pricing modal, buy the Starter Pack with the test card, get redirected back, confirm 10K characters in your balance, generate more speech, refresh the page, and verify the balance persists.
 
 If all of that works, you've got a working SaaS.
 
@@ -377,7 +373,7 @@ If all of that works, you've got a working SaaS.
     It works great here. In production, move credits to a database and validate server-side. Users can edit localStorage in DevTools.
   </Card>
   <Card title="Return URL params" icon="rotate-right">
-    Clever for demos -- pass credit count in the URL, parse it on landing. For real apps, use webhooks so credits only add after confirmed payment.
+    Passing credit count in the URL works for demos. For real apps, use webhooks so credits only add after confirmed payment.
   </Card>
   <Card title="Check credits before API calls" icon="shield-check">
     Never call ElevenLabs without checking balance first. Failed generations that still deduct credits = angry users.
