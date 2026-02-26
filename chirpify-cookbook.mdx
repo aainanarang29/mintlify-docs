@@ -7,7 +7,7 @@ description: "Build a production-ready TTS app with ElevenLabs and Dodo Payments
 
 By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it, with a freemium model, three credit tiers, and a real checkout flow.
 
-<video src="/videos/Astute_Platinum_Saga.mp4" controls={true} />
+<video src="/videos/Astute_Platinum_Saga-1.mp4" controls={true} />
 
 <Card icon="github" href="https://github.com/aainanarang29/chirpify-ai" title="Full Source Code">
   Skip the tutorial. Clone, configure, deploy. Every file referenced below lives here.
@@ -68,15 +68,15 @@ Before writing any code, you need three products in Dodo, one for each credit pa
 ### Option A: The Dashboard (2 minutes, no code)
 
 {/* 🎥 VIDEO #1: "How to Add API Key in Dodo"
- <Frame caption="Getting your Dodo API key">
-   <video controls src="/videos/dodo-api-key-setup.mp4" />
- </Frame>
+<Frame caption="Getting your Dodo API key">
+ <video controls src="/videos/dodo-api-key-setup.mp4" />
+</Frame>
 */}
 
 {/* 🎥 VIDEO #2: "How to Add Products in Dodo"
- <Frame caption="Creating your credit pack products">
-   <video controls src="/videos/dodo-create-products.mp4" />
- </Frame>
+<Frame caption="Creating your credit pack products">
+ <video controls src="/videos/dodo-create-products.mp4" />
+</Frame>
 */}
 
 <Steps>
@@ -197,8 +197,6 @@ if (urlParams.get('success') === 'true') {
 The rule is simple: check balance first, call the API, deduct only on success. Never charge for a failed generation.
 
 {/* 🎨 EXCALIDRAW DIAGRAM #3: Credit Deduction Flow */}
-
-![Credit flow: Enter text → Enough credits? → Yes: generate + deduct + play. No: show pricing modal.](/images/credit-flow.svg)
 
 ```javascript
 async function generateSpeech(text, voice) {
