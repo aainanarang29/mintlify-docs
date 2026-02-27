@@ -76,7 +76,7 @@ The more you buy, the cheaper it gets. A straightforward volume discount where u
 
 ## Project Setup
 
-Before writing any code, you need three products in Dodo — one for each credit pack. Two ways to do this.
+Before writing any code, you need three products in Dodo, one for each credit pack. Two ways to do this.
 
 ```bash
 mkdir chirpify-ai
@@ -155,7 +155,7 @@ Before writing any code, you need three products in Dodo - one for each credit p
 
 <Steps>
   <Step title="Grab your API key">
-    Head to your [Dodo Payments Dashboard](https://dashboard.dodopayments.com), go to **API Keys**, and generate a new key. Save it somewhere safe. You'll need it in Step 2.
+    Head to your [Dodo Payments Dashboard](https://dodopayments.com/), go to **API Keys**, and generate a new key. Save it somewhere safe. You'll need it in Step 2.
   </Step>
   <Step title="Create the Starter Pack">
     **Products → Create Product**. Name it "Starter Pack", set the price to \$5.00 USD, type to one-time payment, tax category to Digital Products. Hit **Create**, copy the `product_id`. Done.
@@ -265,7 +265,7 @@ export default async function handler(req, res) {
 }
 ```
 
-The `customer_id` gets stored in `localStorage` — but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
+The `customer_id` gets stored in `localStorage`but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
 
 ### Checkout Implementation
 
@@ -332,8 +332,8 @@ export default async function handler(req, res) {
 
 Three things to note:
 
-1. **`customer: { customer_id: customerId }`** — links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
-2. **`No characters in the return URL`** — credits are added server-side via webhook, not client-side via URL params.
+1. `customer: { customer_id: customerId }`links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
+2. `No characters in the return URL`credits are added server-side via webhook, not client-side via URL params.
 3. **`billing: { country: 'US' }`** - hardcoded for the demo. In production, collect the user's actual country so Dodo calculates the correct tax.
 
 <Warning>
@@ -771,7 +771,7 @@ Dodo's test mode gives you a fake card that always succeeds:
 | CVC         | Any 3 digits          |
 | ZIP         | Any 5 digits          |
 
-**Full test flow:** Load the app — get 500 free characters in your Dodo wallet — generate speech until credits run out — see the pricing modal — buy the Starter Pack with the test card — webhook credits your wallet with 10K characters — generate more speech — check the Dodo dashboard to see wallet ledger entries (credits, debits, balances).
+**Full test flow:** Load the app, get 500 free characters in your Dodo wallet generate speech until credits run out see the pricing, buy the Starter Pack with the test card webhook credits your wallet with 10K characters generate more speech check the Dodo dashboard to see wallet ledger entries (credits, debits, balances).
 
 If the wallet ledger shows every transaction and the balance matches, you've got a working SaaS.
 
