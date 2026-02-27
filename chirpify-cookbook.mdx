@@ -1,11 +1,11 @@
 ---
 title: "Build a Text-to-Speech App with Credit-Based Billing"
-description: "Let's ship a TTS app with ElevenLabs and Dodo Payments, complete with a free tier, credit packs, and checkout."
+description: "We'll ship a TTS app with ElevenLabs and Dodo Payments, complete with a free tier, credit packs, and checkout."
 ---
 
-# [Chirpify AI: Text-to-Speech with Per-Character Billing](https://chirpify-ai.vercel.app/)
+# [Chirpify AI: Text-to-Speech App](https://chirpify-ai.vercel.app/)
 
-By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it — with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by webhooks.
+By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by webhooks.
 
 <video src="https://mintcdn.com/aainanarang2911gmailcom/cdsleP44WXl152uN/videos/Astute_Platinum_Saga-1.mp4?fit=max&auto=format&n=cdsleP44WXl152uN&q=85&s=694f35c3eda7ba6c6d71e42c537b7681" controls={true} data-path="videos/Astute_Platinum_Saga-1.mp4" />
 
@@ -21,8 +21,8 @@ By the end of this cookbook, you'll have a fully deployed text-to-speech app tha
 - **Freemium model** with 500 free characters on first visit, no signup needed
 - **Three credit packs**: Starter (10K), Pro (50K), Power (200K) characters
 - **Dodo Payments checkout** with real payment links, receipts, and test mode for dev
-- **Server-side credit tracking** with Dodo Wallets — tamper-proof, auditable, no database needed
-- **Webhook-powered fulfillment** — credits added to wallet only after confirmed payment
+- **Server-side credit tracking** with Dodo Wallets, tamper-proof, auditable, no database needed
+- **Webhook-powered fulfillment** credits added to wallet only after confirmed payment
 - **One-command deploy** with `vercel --prod`
 
 Total cost to build and host: **\$0**.
@@ -31,7 +31,7 @@ Total cost to build and host: **\$0**.
 
 ## Architecture
 
-Four layers. Your **frontend** talks to **Vercel serverless functions** that do three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed — Dodo Wallets are the source of truth.
+Your **frontend** talks to **Vercel serverless functions** that do three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed, Dodo Wallets are the source of truth.
 
 | Route                | Purpose                                              |
 | -------------------- | ---------------------------------------------------- |
@@ -42,7 +42,12 @@ Four layers. Your **frontend** talks to **Vercel serverless functions** that do 
 | `POST /api/webhook`  | Receive `payment.succeeded` → credit wallet          |
 
 <Frame>
-  ![Whats App Image2026 02 28at12 06 56AM](/images/WhatsAppImage2026-02-28at12.06.56AM.jpeg)
+  <img
+    src="/images/WhatsAppImage2026-02-28at12.06.56AM.jpeg"
+    alt="Whats App Image2026 02 28at12 06 56AM"
+    className="mr-auto"
+    style={{ width:"80%" }}
+  />
 </Frame>
 
 | Route                | Purpose                                              |
