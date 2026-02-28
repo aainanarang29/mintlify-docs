@@ -7,7 +7,7 @@ description: "We'll ship a TTS app with ElevenLabs and Dodo Payments, complete w
 
 By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by Dodo payments.
 
-<video src="https://mintcdn.com/aainanarang2911gmailcom/cdsleP44WXl152uN/videos/Astute_Platinum_Saga-1.mp4?fit=max&auto=format&n=cdsleP44WXl152uN&q=85&s=694f35c3eda7ba6c6d71e42c537b7681" controls={true} data-path="videos/Astute_Platinum_Saga-1.mp4" />
+<video src="/videos/Chirpify_Video.mp4" controls={true} />
 
 <Card icon="github" href="https://github.com/aainanarang29/chirpify-ai" title="Full Source Code">
   Skip the tutorial. Clone, configure, deploy. Every file referenced below lives here.
@@ -32,12 +32,6 @@ Total cost to build and host: **\$0**.
 ## Architecture
 
 Your **frontend** talks to **Vercel serverless functions** that does three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed, Dodo Wallets are the source of truth.
-
-<Frame>
-  ![Whats App Image2026 02 28at10 24 31AM](/images/WhatsAppImage2026-02-28at10.24.31AM.jpeg)
-
-  ![Whats App Image2026 02 28at10 24 14AM](/images/WhatsAppImage2026-02-28at10.24.14AM.jpeg)
-</Frame>
 
 | Route                | Purpose                                              | |
 | -------------------- | ---------------------------------------------------- | --- |
@@ -79,7 +73,7 @@ DODO_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 ELEVENLABS_KEY=xi_your_elevenlabs_key_here
 
 # App URL (update for production)
-SITE_URL=http://localhost:3000
+S
 ```
 
 <Warning>
@@ -422,11 +416,14 @@ Two things keep this handler secure:
   The signature is computed over the raw request body. Vercel's default body parser delivers `req.body` as a parsed object, so the code re-serializes it with `JSON.stringify`. This works for Dodo payloads, but for bulletproof verification in high-stakes apps, use a [custom body parser](https://vercel.com/docs/functions/runtimes#advanced-usage) to capture the raw bytes and sign against those instead.
 </Note>
 
-<Info>
-  Register your webhook URL in the [Dodo Dashboard](https://dashboard.dodopayments.com) under **Webhooks**. Set the URL to `https://your-app.vercel.app/api/webhook` and filter for `payment.succeeded` events. Copy the **signing secret** (starts with `whsec_`) and add it as `DODO_WEBHOOK_SECRET` in your environment variables.
-</Info>
+### Configure Webhooks
 
----
+In the [Dodo Dashboard](https://dodopayments.com/), go to **Webhooks** and create one:
+
+<video src="/videos/Golden_Sailfish.mp4" controls={true} />
+
+- **URL**: `https://your-app.vercel.app/api/webhook`
+- **Events**: `payment.succeeded`
 
 ## Step 4: Track Usage and Deduct Credits (Server-Side)
 
@@ -677,13 +674,6 @@ Add these in Vercel under **Settings \> Environment Variables**:
 | `DODO_WEBHOOK_SECRET`   | Verifies webhook signatures from Dodo | `whsec_...`                      |
 | `ELEVENLABS_KEY`        | Authenticates with ElevenLabs         | `xi_...`                         |
 | `SITE_URL`              | Your app URL (for return redirects)   | `https://chirpify-ai.vercel.app` |
-
-### Configure Webhooks
-
-In the [Dodo Dashboard](https://dodopayments.com/), go to **Webhooks** and create one:
-
-- **URL**: `https://your-app.vercel.app/api/webhook`
-- **Events**: `payment.succeeded`
 
 ### Deploy
 
