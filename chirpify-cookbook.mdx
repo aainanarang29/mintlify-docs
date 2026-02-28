@@ -31,7 +31,7 @@ Total cost to build and host: **\$0**.
 
 ## Architecture
 
-Your **frontend** talks to **Vercel serverless functions** that use the [Dodo Payments SDK](https://www.npmjs.com/package/dodopayments) to create customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and create checkout sessions for purchases. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed — Dodo Wallets are the source of truth.
+Your **frontend** talks to **Vercel serverless functions** that use the [Dodo Payments SDK](https://www.npmjs.com/package/dodopayments) to create customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and create checkout sessions for purchases. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed Dodo Wallets are the source of truth.
 
 <Frame>
   ![Credit Purchase Flow](/images/credit-purchase-flow.jpeg)
@@ -81,8 +81,9 @@ DODO_PAYMENTS_WEBHOOK_KEY=whsec_your_webhook_secret_here
 ELEVENLABS_KEY=xi_your_elevenlabs_key_here
 
 # App URL (update for production)
-SITE_URL=http://localhost:3000
 ```
+
+SITE_URL=http://localhost:3000
 
 <Warning>
   Never commit `.env` to version control. The `.gitignore` in the repo already handles this.
@@ -614,13 +615,13 @@ The balance comes from `/api/balance` (Step 6), which reads the Dodo wallet. Aft
 
 Add these in Vercel under **Settings \> Environment Variables**:
 
-| Variable                    | What it does                          | Example                          |
-| --------------------------- | ------------------------------------- | -------------------------------- |
-| `DODO_PAYMENTS_API_KEY`     | Authenticates with Dodo               | `sk_test_...`                    |
-| `DODO_ENV`                  | SDK environment (`test_mode`/`live_mode`) | `test_mode`                  |
-| `DODO_PAYMENTS_WEBHOOK_KEY` | Verifies webhook signatures from Dodo | `whsec_...`                      |
-| `ELEVENLABS_KEY`            | Authenticates with ElevenLabs         | `xi_...`                         |
-| `SITE_URL`                  | Your app URL (for return redirects)   | `https://chirpify-ai.vercel.app` |
+| Variable                    | What it does                              | Example                          |
+| --------------------------- | ----------------------------------------- | -------------------------------- |
+| `DODO_PAYMENTS_API_KEY`     | Authenticates with Dodo                   | `sk_test_...`                    |
+| `DODO_ENV`                  | SDK environment (`test_mode`/`live_mode`) | `test_mode`                      |
+| `DODO_PAYMENTS_WEBHOOK_KEY` | Verifies webhook signatures from Dodo     | `whsec_...`                      |
+| `ELEVENLABS_KEY`            | Authenticates with ElevenLabs             | `xi_...`                         |
+| `SITE_URL`                  | Your app URL (for return redirects)       | `https://chirpify-ai.vercel.app` |
 
 ### Deploy
 
@@ -652,9 +653,9 @@ If the wallet ledger shows every transaction and the balance matches, you've got
 
 ## Things That'll Save You Debugging Time
 
-1. **Use `checkoutSessions.create()`, not `payments.create()`** — the payments endpoint is deprecated. Checkout sessions always return a `checkout_url`.
+1. **`Use checkoutSessions.create(), not payments.create()`** — the payments endpoint is deprecated. Checkout sessions always return a `checkout_url`.
 2. **Dodo Wallets = server-side credits** - tamper-proof, auditable credit tracking. No database needed.
-3. **Use `payment_id` as your `idempotency_key`** - Dodo retries failed webhooks. This prevents double-credits.
+3. **`Use payment_id as your idempotency_key`** - Dodo retries failed webhooks. This prevents double-credits.
 4. **Check, generate, then debit** - always check wallet balance before calling ElevenLabs. Only debit after a successful generation. Return 402 to trigger the upsell modal.
 
 ---
@@ -665,11 +666,11 @@ If the wallet ledger shows every transaction and the balance matches, you've got
   Everything in this cookbook runs on **test mode**. Flip these switches before taking real payments.
 </Warning>
 
-|           | Test                                                   | Live                                                             |
-| --------- | ------------------------------------------------------ | ---------------------------------------------------------------- |
-| Base URL  | `test.dodopayments.com`                                | `live.dodopayments.com`                                          |
-| API Keys  | `sk_test_...`                                          | `sk_live_...`                                                    |
-| Payments  | Simulated (no real charges)                            | Real money                                                       |
+|           | Test                                                     | Live                                                     |
+| --------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| Base URL  | `test.dodopayments.com`                                  | `live.dodopayments.com`                                  |
+| API Keys  | `sk_test_...`                                            | `sk_live_...`                                            |
+| Payments  | Simulated (no real charges)                              | Real money                                               |
 | Dashboard | [dodopayments.com](https://dodopayments.com) (test mode) | [dodopayments.com](https://dodopayments.com) (live mode) |
 
 The switch: create live products in the dashboard, generate a live API key, set `DODO_ENV=live_mode` in Vercel, swap the product IDs in `api/checkout.js` and `api/webhook.js`, update the webhook URL to your production domain. Test with a real card (you can refund yourself), and you're in business.
