@@ -5,7 +5,7 @@ description: "We'll ship a TTS app with ElevenLabs and Dodo Payments, complete w
 
 # [Chirpify AI: Text-to-Speech App](https://chirpify-ai.vercel.app/)
 
-By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by Dodo payments.
+By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by Dodo Payments.
 
 <video src="/videos/Chirpify_Video.mp4" controls={true} />
 
@@ -31,15 +31,23 @@ Total cost to build and host: **\$0**.
 
 ## Architecture
 
-Your **frontend** talks to **Vercel serverless functions** that does three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed, Dodo Wallets are the source of truth.
+Your **frontend** talks to **Vercel serverless functions** that do three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed, Dodo Wallets are the source of truth.
 
-| Route                | Purpose                                              | |
-| -------------------- | ---------------------------------------------------- | --- |
-| `POST /api/customer` | Create Dodo customer + seed 500 free chars to wallet | |
-| `GET /api/balance`   | Read wallet balance from Dodo                        | |
-| `POST /api/checkout` | Create payment session linked to customer            | |
-| `POST /api/speak`    | Check wallet → call ElevenLabs → debit wallet        | |
-| `POST /api/webhook`  | Receive `payment.succeeded` → credit wallet          | |
+<Frame>
+  ![Credit Purchase Flow](/images/speech-generation-flow.jpeg)
+</Frame>
+
+<Frame>
+  ![Speech Generation Flow](/images/credit-purchase-flow.jpeg)
+</Frame>
+
+| Route                | Purpose                                              |
+| -------------------- | ---------------------------------------------------- |
+| `POST /api/customer` | Create Dodo customer + seed 500 free chars to wallet |
+| `GET /api/balance`   | Read wallet balance from Dodo                        |
+| `POST /api/checkout` | Create payment session linked to customer            |
+| `POST /api/speak`    | Check wallet, call ElevenLabs, debit wallet          |
+| `POST /api/webhook`  | Receive `payment.succeeded`, credit wallet           |
 
 ## Pricing Model
 
@@ -73,7 +81,7 @@ DODO_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 ELEVENLABS_KEY=xi_your_elevenlabs_key_here
 
 # App URL (update for production)
-S
+SITE_URL=http://localhost:3000
 ```
 
 <Warning>
@@ -85,6 +93,8 @@ Run locally:
 ```bash
 npm run dev
 ```
+
+Open `http://localhost:3000` to see it running.
 
 ---
 
@@ -206,7 +216,7 @@ export default async function handler(req, res) {
 }
 ```
 
-The `customer_id` gets stored in `localStorage`but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
+The `customer_id` gets stored in `localStorage` but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
 
 ### Checkout Implementation
 
@@ -273,12 +283,12 @@ export default async function handler(req, res) {
 
 Three things to note:
 
-1. `customer: { customer_id: customerId }`links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
-2. `No characters in the return URL`credits are added server-side via webhook, not client-side via URL params.
+1. **`customer: { customer_id: customerId }`** links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
+2. **No characters in the return URL** - credits are added server-side via webhook, not client-side via URL params.
 3. **`billing: { country: 'US' }`** - hardcoded for the demo. In production, collect the user's actual country so Dodo calculates the correct tax.
 
 <Warning>
-  **`Always include payment_link: true.`** Without it, `payment_link` comes back `null` and the checkout button won't work. This is the most common integration issue.
+  **Always include `payment_link: true`.** Without it, `payment_link` comes back `null` and the checkout button won't work. This is the most common integration issue.
 </Warning>
 
 ---
@@ -412,10 +422,6 @@ Two things keep this handler secure:
 1. **Signature verification** - the `verifyWebhookSignature` function rejects any request that wasn't signed by Dodo. Without this, anyone could POST a fake `payment.succeeded` event and credit themselves unlimited characters.
 2. **`idempotency_key`** - using `paymentId` ensures the wallet is only credited once per payment, even if Dodo retries the webhook.
 
-<Note>
-  The signature is computed over the raw request body. Vercel's default body parser delivers `req.body` as a parsed object, so the code re-serializes it with `JSON.stringify`. This works for Dodo payloads, but for bulletproof verification in high-stakes apps, use a [custom body parser](https://vercel.com/docs/functions/runtimes#advanced-usage) to capture the raw bytes and sign against those instead.
-</Note>
-
 ### Configure Webhooks
 
 In the [Dodo Dashboard](https://dodopayments.com/), go to **Webhooks** and create one:
@@ -427,7 +433,7 @@ In the [Dodo Dashboard](https://dodopayments.com/), go to **Webhooks** and creat
 
 ## Step 4: Track Usage and Deduct Credits (Server-Side)
 
-Every TTS request goes through the server, which checks the Dodo wallet balance before calling ElevenLabs and debits only after a successful generation. Users can't manipulate their balance — Dodo's wallet is the single source of truth.
+Every TTS request goes through the server, which checks the Dodo wallet balance before calling ElevenLabs and debits only after a successful generation. Users can't manipulate their balance. Dodo's wallet is the single source of truth.
 
 ```javascript api/speak.js
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
@@ -708,7 +714,7 @@ Dodo's test mode gives you a fake card that always succeeds:
 | CVC         | Any 3 digits          |
 | ZIP         | Any 5 digits          |
 
-**Full test flow:** Load the app, get 500 free characters in your Dodo wallet generate speech until credits run out see the pricing, buy the Starter Pack with the test card webhook credits your wallet with 10K characters generate more speech check the Dodo dashboard to see wallet ledger entries (credits, debits, balances).
+**Full test flow:** Load the app. Get 500 free characters in your Dodo wallet. Generate speech until credits run out. See the pricing modal. Buy the Starter Pack with the test card. Webhook credits your wallet with 10K characters. Generate more speech. Check the Dodo dashboard to see wallet ledger entries (credits, debits, balances).
 
 If the wallet ledger shows every transaction and the balance matches, you've got a working SaaS.
 
@@ -721,7 +727,7 @@ If the wallet ledger shows every transaction and the balance matches, you've got
     Forget this flag and your checkout URL comes back null. The single most common Dodo integration bug.
   </Card>
   <Card icon="database" title="Dodo Wallets = Server-Side Credits">
-    Wallet ledger entries give you tamper-proof, auditable credit tracking. No database needed — Dodo is your source of truth.
+    Wallet ledger entries give you tamper-proof, auditable credit tracking. No database needed. Dodo is your source of truth.
   </Card>
   <Card icon="rotate-right" title="Webhooks + Idempotency Keys">
     Always use the `payment_id` as your `idempotency_key` when crediting wallets. Dodo retries failed webhooks, and this prevents double-credits.
@@ -752,12 +758,9 @@ The switch: create live products in the dashboard, generate a live API key, upda
 
 ## Keep Building
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card icon="book" href="https://docs.dodopayments.com" title="Dodo Payments Docs">
     API reference, webhooks, SDKs
-  </Card>
-  <Card icon="microphone" href="https://docs.elevenlabs.io" title="ElevenLabs Docs">
-    Voice models, streaming, cloning
   </Card>
   <Card icon="rocket" href="https://vercel.com/docs" title="Vercel Docs">
     Edge functions, domains, CI/CD
