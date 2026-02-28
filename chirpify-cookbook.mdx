@@ -729,7 +729,7 @@ If the wallet ledger shows every transaction and the balance matches, you've got
 | Base URL  | `test.dodopayments.com`                                | `live.dodopayments.com`                                          |
 | API Keys  | `sk_test_...`                                          | `sk_live_...`                                                    |
 | Payments  | Simulated (no real charges)                            | Real money                                                       |
-| Dashboard | [test.dodopayments.com](https://test.dodopayments.com) | [dashboard.dodopayments.com](https://dashboard.dodopayments.com) |
+| Dashboard | [dodopayments.com](https://dodopayments.com) (test mode) | [dodopayments.com](https://dodopayments.com) (live mode) |
 
 The switch: create live products in the dashboard, generate a live API key, update your Vercel env vars, swap the product IDs in `api/checkout.js` and `api/webhook.js`, update the webhook URL to your production domain. Test with a real card (you can refund yourself), and you're in business.
 
