@@ -31,34 +31,23 @@ Total cost to build and host: **\$0**.
 
 ## Architecture
 
-Your **frontend** talks to **Vercel serverless functions** that do three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed, Dodo Wallets are the source of truth.
-
-| Route                | Purpose                                              |
-| -------------------- | ---------------------------------------------------- |
-| `POST /api/customer` | Create Dodo customer + seed 500 free chars to wallet |
-| `GET /api/balance`   | Read wallet balance from Dodo                        |
-| `POST /api/checkout` | Create payment session linked to customer            |
-| `POST /api/speak`    | Check wallet → call ElevenLabs → debit wallet        |
-| `POST /api/webhook`  | Receive `payment.succeeded` → credit wallet          |
+Your **frontend** talks to **Vercel serverless functions** that does three things: create Dodo customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and call Dodo for payment sessions. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed, Dodo Wallets are the source of truth.
 
 <Frame>
-  <img
-    src="/images/WhatsAppImage2026-02-28at12.06.56AM.jpeg"
-    alt="Whats App Image2026 02 28at12 06 56AM"
-    className="mr-auto"
-    style={{ width:"80%" }}
-  />
+  ![Whats App Image2026 02 28at10 24 31AM](/images/WhatsAppImage2026-02-28at10.24.31AM.jpeg)
+
+  _Here's how credits get added after a purchase_
+
+  ![Whats App Image2026 02 28at10 24 14AM](/images/WhatsAppImage2026-02-28at10.24.14AM.jpeg)
 </Frame>
 
-| Route                | Purpose                                              |
-| -------------------- | ---------------------------------------------------- |
-| `POST /api/customer` | Create Dodo customer + seed 500 free chars to wallet |
-| `GET /api/balance`   | Read wallet balance from Dodo                        |
-| `POST /api/checkout` | Create payment session linked to customer            |
-| `POST /api/speak`    | Check wallet → call ElevenLabs → debit wallet        |
-| `POST /api/webhook`  | Receive `payment.succeeded` → credit wallet          |
-
----
+| Route                | Purpose                                              | |
+| -------------------- | ---------------------------------------------------- | --- |
+| `POST /api/customer` | Create Dodo customer + seed 500 free chars to wallet | |
+| `GET /api/balance`   | Read wallet balance from Dodo                        | |
+| `POST /api/checkout` | Create payment session linked to customer            | |
+| `POST /api/speak`    | Check wallet → call ElevenLabs → debit wallet        | |
+| `POST /api/webhook`  | Receive `payment.succeeded` → credit wallet          | |
 
 ## Pricing Model
 
@@ -71,8 +60,6 @@ Chirpify uses the same model as ElevenLabs, Resend, and most usage-based SaaS: b
 | Power   | 200,000    | \$25  | \$0.125      | Volume users      |
 
 The more you buy, the cheaper it gets. A straightforward volume discount where users self-select into the tier that matches their usage.
-
----
 
 ## Project Setup
 
@@ -90,15 +77,7 @@ Your `package.json` should look like this:
 ```json package.json
 {
   "name": "chirpify-ai",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "start": "node server.mjs"
-  },
-  "dependencies": {
-    "@elevenlabs/elevenlabs-js": "^2.36.0",
-    "express": "^5.2.1"
-  }
+  "version": "1.0.0
 }
 ```
 
