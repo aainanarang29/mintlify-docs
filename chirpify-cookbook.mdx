@@ -61,22 +61,10 @@ The more you buy, the cheaper it gets. A straightforward volume discount where u
 
 ## Project Setup
 
-Before writing any code, you need three products in Dodo, one for each credit pack. Two ways to do this.
-
 ```bash
-mkdir chirpify-ai
+git clone https://github.com/aainanarang29/chirpify-ai
 cd chirpify-ai
-npm init -y
-npm install @elevenlabs/elevenlabs-js express
-```
-
-Your `package.json` should look like this:
-
-```json package.json
-{
-  "name": "chirpify-ai",
-  "version": "1.0.0
-}
+npm i
 ```
 
 Create a `.env` file in your project root:
@@ -95,31 +83,13 @@ SITE_URL=http://localhost:3000
 ```
 
 <Warning>
-  Never commit `.env` to version control. Create a `.gitignore` before your first commit.
+  Never commit `.env` to version control. The `.gitignore` in the repo already handles this.
 </Warning>
 
-```bash .gitignore
-node_modules
-.env
-```
+Run locally:
 
-Set up the directory structure:
-
-```
-chirpify-ai/
-  api/
-    customer.js
-    balance.js
-    checkout.js
-    speak.js
-    webhook.js
-  public/
-    index.html
-  server.mjs
-  package.json
-  vercel.json
-  .gitignore
-  .env
+```bash
+npm run dev
 ```
 
 ---
