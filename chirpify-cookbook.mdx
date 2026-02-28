@@ -711,20 +711,10 @@ If the wallet ledger shows every transaction and the balance matches, you've got
 
 ## Things That'll Save You Debugging Time
 
-<CardGroup cols={2}>
-  <Card icon="triangle-exclamation" title="payment_link: true">
-    Forget this flag and your checkout URL comes back null. The single most common Dodo integration bug.
-  </Card>
-  <Card icon="database" title="Dodo Wallets = Server-Side Credits">
-    Wallet ledger entries give you tamper-proof, auditable credit tracking. No database needed. Dodo is your source of truth.
-  </Card>
-  <Card icon="rotate-right" title="Webhooks + Idempotency Keys">
-    Always use the `payment_id` as your `idempotency_key` when crediting wallets. Dodo retries failed webhooks, and this prevents double-credits.
-  </Card>
-  <Card icon="shield-check" title="Check → Generate → Debit">
-    Always check wallet balance before calling ElevenLabs. Only debit after a successful generation. Return 402 to trigger the upsell modal.
-  </Card>
-</CardGroup>
+1. **Always include `payment_link: true`** - forget this flag and your checkout URL comes back null. The most common Dodo integration bug.
+2. **Dodo Wallets = server-side credits** - tamper-proof, auditable credit tracking. No database needed.
+3. **Use `payment_id` as your `idempotency_key`** - Dodo retries failed webhooks. This prevents double-credits.
+4. **Check, generate, then debit** - always check wallet balance before calling ElevenLabs. Only debit after a successful generation. Return 402 to trigger the upsell modal.
 
 ---
 
