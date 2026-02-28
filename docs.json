@@ -45,12 +45,12 @@
               "ai-tools/windsurf"
             ]
           },
-      {
-        "group": "Cookbooks",
-        "pages": [
-          "chirpify-cookbook"
-        ]
-      }
+          {
+            "group": "Cookbooks",
+            "pages": [
+              "chirpify-cookbook"
+            ]
+          }
         ]
       },
       {
@@ -108,15 +108,15 @@
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
