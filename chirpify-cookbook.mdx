@@ -34,11 +34,11 @@ Total cost to build and host: **\$0**.
 Your **frontend** talks to **Vercel serverless functions** that use the [Dodo Payments SDK](https://www.npmjs.com/package/dodopayments) to create customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and create checkout sessions for purchases. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed — Dodo Wallets are the source of truth.
 
 <Frame>
-  ![Speech Generation Flow](/images/credit-purchase-flow.jpeg)
+  ![Credit Purchase Flow](/images/credit-purchase-flow.jpeg)
 </Frame>
 
 <Frame>
-  ![Credit Purchase Flow](/images/speech-generation-flow.jpeg)
+  ![Speech Generation Flow](/images/speech-generation-flow.jpeg)
 </Frame>
 
 | Route                | Purpose                                              |
