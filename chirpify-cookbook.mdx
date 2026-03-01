@@ -154,7 +154,7 @@ curl -X POST "https://test.dodopayments.com/products" \
 
 ## Step 2: Create Customers and Build the Checkout API
 
-Every user needs a Dodo customer account with a wallet. On first visit, your app creates one and seeds it with 500 free characters. When they click "Buy", a checkout session links to that customer so the webhook knows whose wallet to credit. Every API call below uses the official `dodopayments` SDK — no raw `fetch` needed.
+Every user needs a Dodo customer account with a wallet. On first visit, your app creates one and seeds it with 500 free characters. When they click "Buy", a checkout session links to that customer so the webhook knows whose wallet to credit. Every API call below uses the official `dodopayments` SDK - no raw `fetch` needed.
 
 <video src="https://mintcdn.com/aainanarang2911gmailcom/vBjRh0eOQeNt6UeF/videos/Earnest_Chimera.mp4?fit=max&auto=format&n=vBjRh0eOQeNt6UeF&q=85&s=6987b58faa5851eb507f342dafff9497" controls={true} data-path="videos/Earnest_Chimera.mp4" />
 
@@ -235,15 +235,16 @@ export default async function handler(req, res) {
   const returnUrl = process.env.SITE_URL || 'https://chirpify-ai.vercel.app';
 
   try {
-    const session = await dodo.checkoutSessions.create({
-      billing_address: { country: 'US' },
+    const payment = await dodo.payments.create({
+      payment_link: true,
+      billing: { country: 'US' },
       customer: { customer_id: customerId },
       product_cart: [{ product_id: product.id, quantity: 1 }],
       return_url: `${returnUrl}?success=true`,
     });
 
     res.json({
-      checkoutUrl: session.checkout_url,
+      checkoutUrl: payment.payment_link,
       characters: product.characters,
       productName: product.name,
     });
@@ -256,13 +257,13 @@ export default async function handler(req, res) {
 
 Three things to note:
 
-1. **`customer: { customer_id: customerId }`** links the checkout session to an existing Dodo customer. This is what connects the payment to the right wallet.
-2. **No characters in the return URL** — credits are added server-side via webhook, not client-side via URL params.
-3. **`billing_address: { country: 'US' }`** — hardcoded for the demo. In production, collect the user's actual country so Dodo calculates the correct tax.
+1. **`customer: { customer_id: customerId }`** links the payment to an existing Dodo customer. This is what connects the payment to the right wallet.
+2. **No characters in the return URL** - credits are added server-side via webhook, not client-side via URL params.
+3. **`payment_link: true`** - always include this flag. Without it, `payment_link` comes back `null` and the checkout button won't work.
 
-<Info>
-  We use `dodo.checkoutSessions.create()` instead of the deprecated `payments.create()` endpoint. Checkout sessions always return a `checkout_url` — no extra flags needed.
-</Info>
+<Warning>
+  Always include `payment_link: true` in your request body. This is the most common integration mistake.
+</Warning>
 
 ---
 
@@ -654,7 +655,7 @@ If the wallet ledger shows every transaction and the balance matches, you've got
 
 ## Things That'll Save You Debugging Time
 
-1. **`Use checkoutSessions.create(), not payments.create()`** — the payments endpoint is deprecated. Checkout sessions always return a `checkout_url`.
+1. **Always include `payment_link: true`** - without it, `payment_link` comes back `null` and the checkout button won't work. The most common Dodo integration bug.
 2. **Dodo Wallets = server-side credits** - tamper-proof, auditable credit tracking. No database needed.
 3. **`Use payment_id as your idempotency_key`** - Dodo retries failed webhooks. This prevents double-credits.
 4. **Check, generate, then debit** - always check wallet balance before calling ElevenLabs. Only debit after a successful generation. Return 402 to trigger the upsell modal.
