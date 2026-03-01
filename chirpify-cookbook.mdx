@@ -1,130 +1,109 @@
 ---
-title: "Build a Text-to-Speech App with Credit-Based Billing"
-description: "We'll ship a TTS app with ElevenLabs and Dodo Payments, complete with a free tier, credit packs, and checkout."
+title: "Build a Text-to-Speech App with Per-Character Billing"
+description: "Learn how to build Chirpify AI - a text-to-speech app using ElevenLabs and Dodo Payments for credit-based monetization"
 ---
 
-# [Chirpify AI: Text-to-Speech App](https://chirpify-ai.vercel.app/)
+# Chirpify AI: Text-to-Speech with Per-Character Billing
 
-By the end of this cookbook, you'll have a fully deployed text-to-speech app that lets users type text, pick a voice, generate speech, and pay for it with a freemium model, three credit tiers, server-side wallet tracking, and a real checkout flow powered by Dodo Payments.
+Build a modern text-to-speech web application that charges users per character using Dodo Payments. Users get 500 free characters to try, then purchase credit packs to continue generating speech.
 
-<video src="/videos/Chirpify_Video.mp4" controls={true} />
+<Frame>
+  <img src="/images/chirpify-demo.png" alt="Chirpify AI Demo" />
+</Frame>
 
-<Card icon="github" href="https://github.com/aainanarang29/chirpify-ai" title="Full Source Code">
-  Skip the tutorial. Clone, configure, deploy. Every file referenced below lives here.
-</Card>
+<Info>
+  **Before you start, make sure you have:**
 
----
+  - A [Dodo Payments account](https://dashboard.dodopayments.com) (free to create)
+  - An [ElevenLabs API key](https://elevenlabs.io) (free tier available)
+  - Node.js 18+ installed locally
+  - A [Vercel account](https://vercel.com) for deployment
+  - Basic familiarity with JavaScript and REST APIs
+</Info>
 
 ## What You'll Build
 
-- **ElevenLabs TTS** with 5 voice options: type text, hear it spoken back
-- **Freemium model** with 500 free characters on first visit, no signup needed
-- **Three credit packs**: Starter (10K), Pro (50K), Power (200K) characters
-- **Dodo Payments checkout** with real payment links, receipts, and test mode for dev
-- **Server-side credit tracking** with Dodo Wallets, tamper-proof, auditable, no database needed
-- **Webhook-powered fulfillment** credits added to wallet only after confirmed payment
-- **One-command deploy** with `vercel --prod`
+- A text-to-speech app powered by ElevenLabs
+- Per-character billing with three pricing tiers
+- Server-side credit tracking with Dodo Wallets
+- Dodo Payments checkout integration
+- Webhook-powered payment fulfillment
+- Beautiful claymorphic UI with micro-animations
 
-Total cost to build and host: **\$0**.
+## Architecture Overview
 
----
-
-## Architecture
-
-Your **frontend** talks to **Vercel serverless functions** that use the [Dodo Payments SDK](https://www.npmjs.com/package/dodopayments) to create customers with wallets, call ElevenLabs for audio generation (checking and debiting the wallet server-side), and create checkout sessions for purchases. When a payment succeeds, a **webhook** credits the customer's wallet automatically. No database needed Dodo Wallets are the source of truth.
-
-<Frame>
-  ![Credit Purchase Flow](/images/credit-purchase-flow.jpeg)
+<Frame caption="Chirpify AI Architecture">
+  <img src="https://link.excalidraw.com/readonly/chirpify-architecture" alt="Architecture Diagram" />
 </Frame>
 
-<Frame>
-  ![Speech Generation Flow](/images/speech-generation-flow.jpeg)
-</Frame>
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│    Frontend     │────▶│  Vercel Edge    │────▶│   ElevenLabs    │
+│  (HTML/CSS/JS)  │     │   Functions     │     │    TTS API      │
+│                 │     │                 │     │                 │
+└────────┬────────┘     └────────┬────────┘     └─────────────────┘
+         │                       │
+         │                       ▼
+         │              ┌─────────────────┐
+         │              │  Dodo Payments  │
+         └─────────────▶│  Wallets API    │◀──── Webhook
+                        │  (Credit Store) │      (payment.succeeded)
+                        └─────────────────┘
+```
 
-| Route                | Purpose                                              |
-| -------------------- | ---------------------------------------------------- |
-| `POST /api/customer` | Create Dodo customer + seed 500 free chars to wallet |
-| `GET /api/balance`   | Read wallet balance from Dodo                        |
-| `POST /api/checkout` | Create checkout session linked to customer           |
-| `POST /api/speak`    | Check wallet, call ElevenLabs, debit wallet          |
-| `POST /api/webhook`  | Receive `payment.succeeded`, credit wallet           |
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| Frontend | HTML5, CSS3, JavaScript (ES6+) | User interface with claymorphic design |
+| Backend | Node.js 18+, Vercel Serverless Functions | API routes for TTS and payments |
+| Text-to-Speech | ElevenLabs API | High-quality voice synthesis |
+| Payments | Dodo Payments | One-time payments + wallet credits |
+| Hosting | Vercel | Edge deployment with automatic SSL |
+| State | Dodo Wallets | Server-side credit balance via wallet ledger |
 
 ## Pricing Model
 
-Chirpify uses the same model as ElevenLabs, Resend, and most usage-based SaaS: buy credits upfront, spend them as you go.
-
-| Pack    | Characters | Price | Per 1K chars | Who it's for      |
-| ------- | ---------- | ----- | ------------ | ----------------- |
-| Starter | 10,000     | \$5   | \$0.50       | Kicking the tires |
-| Pro     | 50,000     | \$10  | \$0.20       | Regular use       |
-| Power   | 200,000    | \$25  | \$0.125      | Volume users      |
-
-The more you buy, the cheaper it gets. A straightforward volume discount where users self-select into the tier that matches their usage.
-
-## Project Setup
-
-```bash
-git clone https://github.com/aainanarang29/chirpify-ai
-cd chirpify-ai
-npm i
-```
-
-Create a `.env` file in your project root:
-
-```bash .env
-# Dodo Payments
-DODO_PAYMENTS_API_KEY=sk_test_your_test_key_here
-DODO_ENV=test_mode
-DODO_PAYMENTS_WEBHOOK_KEY=whsec_your_webhook_secret_here
-
-# ElevenLabs
-ELEVENLABS_KEY=xi_your_elevenlabs_key_here
-
-# App URL (update for production)
-SITE_URL=http://localhost:3000
-```
-
-<Warning>
-  Never commit `.env` to version control. The `.gitignore` in the repo already handles this.
-</Warning>
-
-Run locally:
-
-```bash
-npm run dev
-```
-
-The `dev` script uses Node's built-in `--env-file` flag to load your `.env` automatically. Requires **Node 20.6+** (run `node -v` to check).
-
-Open `http://localhost:3000` to see it running.
+| Pack | Characters | Price | Cost per 1K | Best For |
+|------|------------|-------|-------------|----------|
+| Starter | 10,000 | $5 | $0.50 | Trying it out |
+| Pro | 50,000 | $10 | $0.20 | Regular users |
+| Power | 200,000 | $25 | $0.125 | Power users |
 
 ---
 
-## Step 1: Set Up Products in Dodo
+## Step 1: Create Products on Dodo Payments
 
-Before writing any code, you need three products in Dodo - one for each credit pack. Two ways to do this.
+First, create your credit pack products in the Dodo Payments dashboard or via API.
 
-### Option A: The Dashboard (2 minutes, no code)
+### Option A: Using the Dashboard
 
-<Steps>
-  <Step title="Grab your API key">
-    Head to your [Dodo Payments Dashboard](https://dodopayments.com/), go to **API Keys**, and generate a new key. Save it somewhere safe. You'll need it in Step 2.
-  </Step>
-  <Step title="Create the Starter Pack">
-    **Products → Create Product**. Name it "Starter Pack", set the price to \$5.00 USD, type to one-time payment, tax category to Digital Products. Hit **Create**, copy the `product_id`. Done.
+<Frame caption="Creating a product in Dodo Payments Dashboard">
+  <video
+    src="https://your-storage.com/videos/dodo-create-product.mp4"
+    controls
+    autoPlay={false}
+    muted
+  />
+</Frame>
 
-    <video src="https://mintcdn.com/aainanarang2911gmailcom/vBjRh0eOQeNt6UeF/videos/Happy_Pewter_Condor.mp4?fit=max&auto=format&n=vBjRh0eOQeNt6UeF&q=85&s=0620cb49f421044234016d803ba6dfe1" controls={true} data-path="videos/Happy_Pewter_Condor.mp4" />
-  </Step>
-  <Step title="Repeat for Pro and Power">
-    Same flow. Pro Pack = $10 (50K characters). Power Pack = $25 (200K characters). Save all three `product_id` values. You'll plug them into your checkout API next.
-  </Step>
-</Steps>
+1. Log into your [Dodo Payments Dashboard](https://dashboard.dodopayments.com)
+2. Navigate to **Products** in the sidebar
+3. Click **Create Product**
+4. Fill in the product details:
+   - **Name**: Starter Pack
+   - **Description**: 10,000 characters for text-to-speech
+   - **Price**: $5.00 (USD)
+   - **Type**: One-time payment
+   - **Tax Category**: Digital Products
+5. Click **Create** and copy the `product_id`
+6. Repeat for Pro and Power packs
 
-### Option B: Ask your agent to cURL it
-
-If clicking buttons isn't your thing:
+### Option B: Using the API
 
 ```bash
+# Create Starter Pack ($5 = 500 cents)
 curl -X POST "https://test.dodopayments.com/products" \
   -H "Authorization: Bearer YOUR_DODO_API_KEY" \
   -H "Content-Type: application/json" \
@@ -142,23 +121,133 @@ curl -X POST "https://test.dodopayments.com/products" \
   }'
 ```
 
-<Card icon="github" href="https://github.com/aainanarang29/chirpify-ai#create-products" title="All three cURL commands">
-  Starter, Pro, and Power pack creation. Copy, paste, run.
-</Card>
+<Expandable title="All three cURL commands">
 
-<Info>
-  `test.dodopayments.com` for development. `live.dodopayments.com` when you're ready for real money.
-</Info>
+```bash
+# Pro Pack ($10 = 1000 cents)
+curl -X POST "https://test.dodopayments.com/products" \
+  -H "Authorization: Bearer YOUR_DODO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Pro Pack",
+    "description": "50,000 characters for text-to-speech",
+    "price": {
+      "currency": "USD",
+      "discount": 0,
+      "price": 1000,
+      "purchasing_power_parity": false,
+      "type": "one_time_price"
+    },
+    "tax_category": "digital_products"
+  }'
+
+# Power Pack ($25 = 2500 cents)
+curl -X POST "https://test.dodopayments.com/products" \
+  -H "Authorization: Bearer YOUR_DODO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Power Pack",
+    "description": "200,000 characters for text-to-speech",
+    "price": {
+      "currency": "USD",
+      "discount": 0,
+      "price": 2500,
+      "purchasing_power_parity": false,
+      "type": "one_time_price"
+    },
+    "tax_category": "digital_products"
+  }'
+```
+
+</Expandable>
+
+Save the `product_id` from each response. You'll need these for the checkout API.
+
+<Tip>
+Use `https://test.dodopayments.com` for development and `https://live.dodopayments.com` for production.
+</Tip>
+
+### Project Setup
+
+```bash
+mkdir chirpify-ai
+cd chirpify-ai
+npm init -y
+npm install @elevenlabs/elevenlabs-js express
+```
+
+Create a `.env` file in your project root:
+
+<CodeGroup>
+
+```bash .env
+# Dodo Payments
+DODO_PAYMENTS_API_KEY=sk_test_your_test_key_here
+DODO_ENV=test
+
+# ElevenLabs
+ELEVENLABS_KEY=xi_your_elevenlabs_key_here
+
+# App URL (update for production)
+SITE_URL=http://localhost:3000
+```
+
+</CodeGroup>
+
+<Warning>
+  Never commit `.env` to version control. Add it to your `.gitignore` immediately.
+</Warning>
+
+Your `package.json`:
+
+<CodeGroup>
+
+```json package.json
+{
+  "name": "chirpify-ai",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.36.0",
+    "express": "^5.2.1"
+  }
+}
+```
+
+</CodeGroup>
 
 ---
 
-## Step 2: Create Customers and Build the Checkout API
+## Step 2: Build the Checkout API
 
-Every user needs a Dodo customer account with a wallet. On first visit, your app creates one and seeds it with 500 free characters. When they click "Buy", a checkout session links to that customer so the webhook knows whose wallet to credit. Every API call below uses the official `dodopayments` SDK — no raw `fetch` needed.
+Create a serverless function that creates Dodo payment sessions and returns a checkout URL.
 
-<video src="https://mintcdn.com/aainanarang2911gmailcom/vBjRh0eOQeNt6UeF/videos/Earnest_Chimera.mp4?fit=max&auto=format&n=vBjRh0eOQeNt6UeF&q=85&s=6987b58faa5851eb507f342dafff9497" controls={true} data-path="videos/Earnest_Chimera.mp4" />
+### Payment Flow
+
+<Frame caption="Payment Flow Diagram">
+  <img src="https://link.excalidraw.com/readonly/chirpify-payment-flow" alt="Payment Flow" />
+</Frame>
+
+```
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│  User    │    │ Frontend │    │  API     │    │  Dodo    │
+│  clicks  │───▶│  calls   │───▶│ creates  │───▶│ returns  │
+│  "Buy"   │    │ /checkout│    │ payment  │    │ link     │
+└──────────┘    └──────────┘    └──────────┘    └────┬─────┘
+                                                     │
+┌──────────┐    ┌──────────┐    ┌──────────┐         │
+│ Credits  │◀───│ Frontend │◀───│  Dodo    │◀────────┘
+│ updated  │    │ receives │    │ redirects│
+│          │    │ callback │    │ user back│
+└──────────┘    └──────────┘    └──────────┘
+```
 
 ### Create a Customer (on first visit)
+
+Before a user can buy credits or generate speech, they need a Dodo customer account. On first visit, the frontend calls this endpoint, which creates a customer and seeds their wallet with 500 free characters.
 
 ```javascript api/customer.js
 import DodoPayments from 'dodopayments';
@@ -199,14 +288,13 @@ export default async function handler(req, res) {
 }
 ```
 
-The `customer_id` gets stored in `localStorage` but only as an identifier. The actual credits live in Dodo's wallet, not the browser.
+The `customer_id` gets stored in the browser's `localStorage`. Every subsequent API call includes it so the server knows whose wallet to check.
 
 ### Checkout Implementation
 
 ```javascript api/checkout.js
 import DodoPayments from 'dodopayments';
 
-// Character credit packs for Chirpify AI
 const PRODUCTS = {
   starter: { id: 'pdt_YOUR_STARTER_ID', characters: 10000, price: 5, name: 'Starter Pack' },
   pro:     { id: 'pdt_YOUR_PRO_ID',     characters: 50000, price: 10, name: 'Pro Pack' },
@@ -235,15 +323,16 @@ export default async function handler(req, res) {
   const returnUrl = process.env.SITE_URL || 'https://chirpify-ai.vercel.app';
 
   try {
-    const session = await dodo.checkoutSessions.create({
-      billing_address: { country: 'US' },
+    const payment = await dodo.payments.create({
+      payment_link: true,
+      billing: { country: 'US' },
       customer: { customer_id: customerId },
       product_cart: [{ product_id: product.id, quantity: 1 }],
       return_url: `${returnUrl}?success=true`,
     });
 
     res.json({
-      checkoutUrl: session.checkout_url,
+      checkoutUrl: payment.payment_link,
       characters: product.characters,
       productName: product.name,
     });
@@ -254,29 +343,26 @@ export default async function handler(req, res) {
 }
 ```
 
-Three things to note:
+<Note>
+Replace `pdt_YOUR_STARTER_ID`, `pdt_YOUR_PRO_ID`, and `pdt_YOUR_POWER_ID` with the product IDs from Step 1.
+</Note>
 
-1. **`customer: { customer_id: customerId }`** links the checkout session to an existing Dodo customer. This is what connects the payment to the right wallet.
-2. **No characters in the return URL** — credits are added server-side via webhook, not client-side via URL params.
-3. **`billing_address: { country: 'US' }`** — hardcoded for the demo. In production, collect the user's actual country so Dodo calculates the correct tax.
+Two key differences from a basic integration:
+1. **`customer: { customer_id: customerId }`** -Links the payment to an existing Dodo customer instead of a hardcoded placeholder. This is what connects the payment to the right wallet.
+2. **No `characters` in the return URL** -Credits are added server-side via webhook, not client-side via URL params.
 
-<Info>
-  We use `dodo.checkoutSessions.create()` instead of the deprecated `payments.create()` endpoint. Checkout sessions always return a `checkout_url` — no extra flags needed.
-</Info>
+<Warning>
+**Critical:** Always include `payment_link: true` in your request body. Without it, `payment_link` will be `null` in the response and users won't be able to checkout.
+</Warning>
 
 ---
 
 ## Step 3: Handle Payment Success with Webhooks
 
-After checkout, Dodo fires a `payment.succeeded` webhook to your server. Your handler verifies the signature, maps the purchased product to a character count, and credits the customer's wallet. No URL params, no localStorage - the server is the source of truth.
-
-Dodo webhooks use the [Standard Webhooks](https://www.standardwebhooks.com/) format (Svix). Each request includes three headers: `webhook-id`, `webhook-timestamp`, and `webhook-signature`. You **must** verify the signature before trusting the payload - otherwise anyone can POST fake events to your endpoint and credit themselves unlimited characters.
+When a payment succeeds, Dodo fires a `payment.succeeded` webhook. Your webhook handler maps the purchased product to a character count and credits the customer's wallet. No URL params, no localStorage -the server is the source of truth.
 
 ```javascript api/webhook.js
-import crypto from 'crypto';
 import DodoPayments from 'dodopayments';
-
-const DODO_WEBHOOK_KEY = process.env.DODO_PAYMENTS_WEBHOOK_KEY;
 
 const dodo = new DodoPayments({
   environment: process.env.DODO_ENV || 'test_mode',
@@ -289,53 +375,18 @@ const PRODUCT_CREDITS = {
   'pdt_YOUR_POWER_ID':   200000,  // Power Pack
 };
 
-// Verify Dodo webhook signature (Standard Webhooks / Svix format)
-function verifyWebhookSignature(body, headers) {
-  const webhookId = headers['webhook-id'];
-  const webhookTimestamp = headers['webhook-timestamp'];
-  const webhookSignature = headers['webhook-signature'];
-
-  if (!webhookId || !webhookTimestamp || !webhookSignature) {
-    throw new Error('Missing webhook signature headers');
-  }
-
-  // Reject webhooks older than 5 minutes to prevent replay attacks
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(webhookTimestamp)) > 300) {
-    throw new Error('Webhook timestamp too old');
-  }
-
-  // The signed content is: "{webhook-id}.{webhook-timestamp}.{body}"
-  const signedContent = `${webhookId}.${webhookTimestamp}.${typeof body === 'string' ? body : JSON.stringify(body)}`;
-
-  // Decode the secret (strip the "whsec_" prefix, then base64-decode)
-  const secretBytes = Buffer.from(DODO_WEBHOOK_KEY.replace('whsec_', ''), 'base64');
-
-  // Compute the expected signature
-  const expectedSignature = crypto
-    .createHmac('sha256', secretBytes)
-    .update(signedContent)
-    .digest('base64');
-
-  // The header can contain multiple signatures (e.g., "v1,abc123 v1,def456")
-  const passedSignatures = webhookSignature.split(' ').map(sig => sig.split(',')[1]);
-
-  if (!passedSignatures.some(sig => sig === expectedSignature)) {
-    throw new Error('Invalid webhook signature');
-  }
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Step 1: Verify the webhook signature
-  try {
-    verifyWebhookSignature(req.body, req.headers);
-  } catch (err) {
-    console.error('Webhook verification failed:', err.message);
-    return res.status(401).json({ error: 'Invalid webhook signature' });
+  // Validate webhook signature headers
+  const webhookId = req.headers['webhook-id'];
+  const webhookTimestamp = req.headers['webhook-timestamp'];
+  const webhookSignature = req.headers['webhook-signature'];
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    return res.status(400).json({ error: 'Missing webhook signature headers' });
   }
 
   const event = req.body;
@@ -360,7 +411,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 2: Credit the customer's wallet
+    // Credit the customer's wallet
     const wallet = await dodo.customers.wallets.ledgerEntries.create(
       customerId,
       {
@@ -381,23 +432,17 @@ export default async function handler(req, res) {
 }
 ```
 
-Two things keep this handler secure:
+The `idempotency_key` is critical -Dodo retries failed webhooks, and this key ensures the wallet is only credited once per payment.
 
-1. **Signature verification** - the `verifyWebhookSignature` function rejects any request that wasn't signed by Dodo. Without this, anyone could POST a fake `payment.succeeded` event and credit themselves unlimited characters.
-2. **`idempotency_key`** - using `paymentId` ensures the wallet is only credited once per payment, even if Dodo retries the webhook.
+<Tip>
+Register your webhook URL in the [Dodo Dashboard](https://dashboard.dodopayments.com) under **Webhooks**. Filter for `payment.succeeded` events only.
+</Tip>
 
-### Configure Webhooks
-
-In the [Dodo Dashboard](https://dodopayments.com/), go to **Webhooks** and create one:
-
-<video src="/videos/Golden_Sailfish.mp4" controls={true} />
-
-- **URL**: `https://your-app.vercel.app/api/webhook`
-- **Events**: `payment.succeeded`
+---
 
 ## Step 4: Track Usage and Deduct Credits (Server-Side)
 
-Every TTS request goes through the server, which checks the Dodo wallet balance before calling ElevenLabs and debits only after a successful generation. Users can't manipulate their balance. Dodo's wallet is the single source of truth.
+Every TTS request now goes through the server, which checks the wallet balance before calling ElevenLabs and debits only after a successful generation. Users can't manipulate their balance -Dodo's wallet is the single source of truth.
 
 ```javascript api/speak.js
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
@@ -481,9 +526,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("Speak error:", err.message);
-    if (err.message.includes('Insufficient')) {
-      return res.status(402).json({ error: err.message });
-    }
     res.status(500).json({ error: "Speech generation failed. Try again." });
   }
 }
@@ -491,17 +533,54 @@ export default async function handler(req, res) {
 
 The pattern: **check → generate → debit**. Never charge for a failed generation. The `402` status code tells the frontend to show the pricing modal.
 
-<Card icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/api/speak.js" title="Full speak handler">
-  The complete `api/speak.js` with wallet integration and ElevenLabs SDK.
-</Card>
-
 ---
 
 ## Step 5: Build the Pricing UI
 
-When credits run out, show a clean upgrade modal. Three cards, three price points, one click to checkout.
+Create an attractive modal that displays when users need more credits.
 
-Each card carries a `data-pack` attribute that maps to your product config. Click fires `/api/checkout` with the `customerId`, response comes back with a Dodo checkout URL, `window.location.href` does the rest. Click, pay, done.
+<Frame caption="Pricing modal design">
+  <img src="/images/chirpify-pricing-modal.png" alt="Pricing Modal" />
+</Frame>
+
+### HTML Structure
+
+```html
+<div class="pricing-overlay" id="pricingOverlay">
+  <div class="pricing-modal">
+    <div class="pricing-header">
+      <h2>Buy Credits</h2>
+      <p>Get more characters to keep generating speech!</p>
+    </div>
+
+    <div class="pricing-grid">
+      <div class="pricing-card" data-pack="starter">
+        <div class="amount">10K</div>
+        <div class="label">characters</div>
+        <div class="price">$5</div>
+      </div>
+
+      <div class="pricing-card popular" data-pack="pro">
+        <div class="amount">50K</div>
+        <div class="label">characters</div>
+        <div class="price">$10</div>
+        <div class="tag">Most Popular</div>
+      </div>
+
+      <div class="pricing-card" data-pack="power">
+        <div class="amount">200K</div>
+        <div class="label">characters</div>
+        <div class="price">$25</div>
+        <div class="tag">Best Value</div>
+      </div>
+    </div>
+
+    <button class="pricing-close" id="pricingClose">Maybe Later</button>
+  </div>
+</div>
+```
+
+### JavaScript Handler
 
 ```javascript
 // Handle pricing card clicks
@@ -510,6 +589,7 @@ document.querySelectorAll('.pricing-card').forEach(card => {
     const pack = card.dataset.pack;
     const customerId = localStorage.getItem('chirpify_customer_id');
 
+    // Show loading state
     card.style.opacity = '0.7';
     card.style.pointerEvents = 'none';
 
@@ -521,10 +601,14 @@ document.querySelectorAll('.pricing-card').forEach(card => {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Checkout failed');
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Checkout failed');
+      }
 
       // Redirect to Dodo Payments checkout
       window.location.href = data.checkoutUrl;
+
     } catch (err) {
       showError(err.message);
       card.style.opacity = '1';
@@ -534,15 +618,42 @@ document.querySelectorAll('.pricing-card').forEach(card => {
 });
 ```
 
-<Card icon="github" href="https://github.com/aainanarang29/chirpify-ai/blob/main/public/index.html" title="Pricing modal markup + handlers">
-  HTML structure, click handlers, and loading states. Ready to drop into your project.
-</Card>
+---
+
+## Step 6: Display Credit Balance
+
+A live counter in the header that shows the balance from Dodo's wallet. Green when healthy, yellow when running low, red when empty.
+
+```javascript
+// Fetch balance from Dodo wallet via your API
+async function fetchBalance() {
+  const res = await fetch(`/api/balance?customer_id=${customerId}`);
+  const data = await res.json();
+  credits = data.balance;
+  updateCreditsDisplay();
+}
+
+function updateCreditsDisplay() {
+  const display = document.querySelector('.credits-number');
+  const container = document.getElementById('creditsCount');
+
+  display.textContent = credits >= 1000
+    ? (credits / 1000).toFixed(credits % 1000 === 0 ? 0 : 1) + 'K'
+    : credits.toString();
+
+  container.classList.remove('low', 'empty');
+  if (credits <= 0) container.classList.add('empty');
+  else if (credits < 100) container.classList.add('low');
+}
+```
+
+The balance comes from `/api/balance`, which reads the Dodo wallet. After each TTS generation, the `/api/speak` response includes the updated balance so the UI stays in sync without an extra API call.
 
 ---
 
-## Step 6: Balance API
+## Step 7: Balance API
 
-The endpoint that returns the customer's current wallet balance. Called on page load and after returning from checkout.
+Create an endpoint that returns the customer's current wallet balance. The frontend calls this on page load and after returning from checkout.
 
 ```javascript api/balance.js
 import DodoPayments from 'dodopayments';
@@ -578,124 +689,220 @@ export default async function handler(req, res) {
 
 ---
 
-## Step 7: Display Credit Balance
-
-A live counter in the header that shows the balance from Dodo's wallet. Green when healthy, yellow when running low, red when empty. No ambiguity.
-
-```javascript
-// Fetch balance from Dodo wallet via your API
-async function fetchBalance() {
-  const customerId = localStorage.getItem('chirpify_customer_id');
-  const res = await fetch(`/api/balance?customer_id=${customerId}`);
-  const data = await res.json();
-  credits = data.balance;
-  updateCreditsDisplay();
-}
-
-function updateCreditsDisplay() {
-  const display = document.querySelector('.credits-number');
-  const container = document.getElementById('creditsCount');
-
-  display.textContent = credits >= 1000
-    ? (credits / 1000).toFixed(credits % 1000 === 0 ? 0 : 1) + 'K'
-    : credits.toString();
-
-  container.classList.remove('low', 'empty');
-  if (credits <= 0) container.classList.add('empty');
-  else if (credits < 100) container.classList.add('low');
-}
-```
-
-The balance comes from `/api/balance` (Step 6), which reads the Dodo wallet. After each TTS generation, the `/api/speak` response includes the updated balance so the UI stays in sync without an extra API call.
-
----
-
-## Deploy It
+## Deployment
 
 ### Environment Variables
 
-Add these in Vercel under **Settings \> Environment Variables**:
+Set these in your Vercel dashboard under **Settings > Environment Variables**:
 
-| Variable                    | What it does                              | Example                          |
-| --------------------------- | ----------------------------------------- | -------------------------------- |
-| `DODO_PAYMENTS_API_KEY`     | Authenticates with Dodo                   | `sk_test_...`                    |
-| `DODO_ENV`                  | SDK environment (`test_mode`/`live_mode`) | `test_mode`                      |
-| `DODO_PAYMENTS_WEBHOOK_KEY` | Verifies webhook signatures from Dodo     | `whsec_...`                      |
-| `ELEVENLABS_KEY`            | Authenticates with ElevenLabs             | `xi_...`                         |
-| `SITE_URL`                  | Your app URL (for return redirects)       | `https://chirpify-ai.vercel.app` |
+<Frame caption="Setting environment variables in Vercel">
+  <video
+    src="https://your-storage.com/videos/vercel-env-vars.mp4"
+    controls
+    autoPlay={false}
+    muted
+  />
+</Frame>
 
-### Deploy
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DODO_PAYMENTS_API_KEY` | Your Dodo API key | `sk_live_...` or `sk_test_...` |
+| `DODO_ENV` | Environment (`test_mode` or `live_mode`) | `test_mode` |
+| `ELEVENLABS_KEY` | Your ElevenLabs API key | `xi_...` |
+| `SITE_URL` | Your production URL | `https://chirpify-ai.vercel.app` |
+
+### Vercel Configuration
+
+```json vercel.json
+{
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "npm install",
+  "outputDirectory": "public"
+}
+```
+
+### Deploy Command
 
 ```bash
+# Install Vercel CLI
 npm install -g vercel
+
+# Deploy to production
 vercel --prod
 ```
 
-Two commands and you're live.
-
 ---
 
-## Test It
+## Testing
 
-Dodo's test mode gives you a fake card that always succeeds:
+### Test Card Details
 
-| Field       | Value                 |
-| ----------- | --------------------- |
+Use Dodo's test card to simulate payments in the test environment:
+
+| Field | Value |
+|-------|-------|
 | Card Number | `4242 4242 4242 4242` |
-| Expiry      | Any future date       |
-| CVC         | Any 3 digits          |
-| ZIP         | Any 5 digits          |
+| Expiry | Any future date (e.g., `12/34`) |
+| CVC | Any 3 digits (e.g., `123`) |
+| ZIP | Any 5 digits (e.g., `12345`) |
 
-**Full test flow:** Load the app. Get 500 free characters in your Dodo wallet. Generate speech until credits run out. See the pricing modal. Buy the Starter Pack with the test card. Webhook credits your wallet with 10K characters. Generate more speech. Check the Dodo dashboard to see wallet ledger entries (credits, debits, balances).
+### Full Test Flow
 
-If the wallet ledger shows every transaction and the balance matches, you've got a working SaaS.
+Walk through this end-to-end. If every step checks out, your integration is complete.
+
+<Steps>
+  <Step title="Use your free characters">
+    Load the app, type a short sentence, pick a voice, and hit generate.
+
+    **Expected:**
+    ```
+    ✓ Audio plays back in the browser
+    ✓ Credit counter drops from 500 → ~470 (depending on text length)
+    ✓ No payment required
+    ```
+  </Step>
+
+  <Step title="Trigger the upsell">
+    Enter text longer than your remaining balance (or just keep generating until you run out).
+
+    **Expected:**
+    ```
+    ✓ Pricing modal appears with three packs
+    ✓ No ElevenLabs API call is made
+    ✓ Credit counter shows 0 (red)
+    ```
+  </Step>
+
+  <Step title="Complete a test purchase">
+    Click the Pro Pack ($10 / 50K characters). You'll be redirected to Dodo's checkout page.
+
+    Enter the test card:
+    - Card: `4242 4242 4242 4242`
+    - Expiry: any future date
+    - CVC: any 3 digits
+
+    **Expected:**
+    ```
+    ✓ Redirected to Dodo checkout page
+    ✓ Test card accepted
+    ✓ Redirected back to your app with ?success=true
+    ✓ Webhook fires → wallet credited with 50,000 characters
+    ✓ Credit counter updates on next balance fetch
+    ```
+  </Step>
+
+  <Step title="Verify in Dodo dashboard">
+    Open [test.dodopayments.com](https://test.dodopayments.com).
+
+    **Expected:**
+    ```
+    ✓ Payments → Payment shows status: Succeeded, Amount: $10.00
+    ✓ Customers → Click your customer → Wallet tab shows:
+      - Welcome bonus: +500 characters (credit)
+      - TTS generations: -N characters each (debit)
+      - Credit pack purchase: +50,000 characters (credit)
+    ```
+
+    <Check>
+      If the payment shows in the dashboard and the wallet ledger has the correct entries, the integration is working end-to-end.
+    </Check>
+  </Step>
+
+  <Step title="Generate more speech">
+    Go back to the app, generate a few more clips.
+
+    **Expected:**
+    ```
+    ✓ Audio plays normally
+    ✓ Credits deduct correctly per character (server-side)
+    ✓ Balance persists after page refresh (fetched from Dodo wallet)
+    ```
+  </Step>
+</Steps>
 
 ---
 
-## Things That'll Save You Debugging Time
+## Complete Source Code
 
-1. **`Use checkoutSessions.create(), not payments.create()`** — the payments endpoint is deprecated. Checkout sessions always return a `checkout_url`.
-2. **Dodo Wallets = server-side credits** - tamper-proof, auditable credit tracking. No database needed.
-3. **`Use payment_id as your idempotency_key`** - Dodo retries failed webhooks. This prevents double-credits.
-4. **Check, generate, then debit** - always check wallet balance before calling ElevenLabs. Only debit after a successful generation. Return 402 to trigger the upsell modal.
-
----
-
-## Going Live
-
-<Warning>
-  Everything in this cookbook runs on **test mode**. Flip these switches before taking real payments.
-</Warning>
-
-|           | Test                                                     | Live                                                     |
-| --------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| Base URL  | `test.dodopayments.com`                                  | `live.dodopayments.com`                                  |
-| API Keys  | `sk_test_...`                                            | `sk_live_...`                                            |
-| Payments  | Simulated (no real charges)                              | Real money                                               |
-| Dashboard | [dodopayments.com](https://dodopayments.com) (test mode) | [dodopayments.com](https://dodopayments.com) (live mode) |
-
-The switch: create live products in the dashboard, generate a live API key, set `DODO_ENV=live_mode` in Vercel, swap the product IDs in `api/checkout.js` and `api/webhook.js`, update the webhook URL to your production domain. Test with a real card (you can refund yourself), and you're in business.
-
----
-
-## Keep Building
-
-<CardGroup cols={3}>
-  <Card icon="book" href="https://docs.dodopayments.com" title="Dodo Payments Docs">
-    API reference, webhooks, SDKs
+<CardGroup cols={2}>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/aainanarang29/chirpify-ai">
+    View the complete source code for Chirpify AI
   </Card>
-  <Card icon="microphone" href="https://docs.elevenlabs.io" title="ElevenLabs Docs">
-    Voice models, streaming, cloning
-  </Card>
-  <Card icon="rocket" href="https://vercel.com/docs" title="Vercel Docs">
-    Edge functions, domains, CI/CD
+  <Card title="Live Demo" icon="play" href="https://chirpify-ai.vercel.app">
+    Try the live demo with 500 free characters
   </Card>
 </CardGroup>
 
-<Tip>
-  Want your AI agent to build this for you? Give it this URL and ask it to follow the guide:
+---
 
-  ```
-  https://aainanarang2911gmailcom.mintlify.app/chirpify-cookbook
-  ```
+## Key Takeaways
+
+<CardGroup cols={2}>
+  <Card title="payment_link: true" icon="link">
+    Always include this parameter to get a checkout URL from Dodo Payments. The most common integration mistake.
+  </Card>
+  <Card title="Dodo Wallets = Server-Side Credits" icon="database">
+    Wallet ledger entries give you tamper-proof, auditable credit tracking. No database needed -Dodo is your source of truth.
+  </Card>
+  <Card title="Webhooks + Idempotency Keys" icon="arrow-right">
+    Always use the `payment_id` as your `idempotency_key` when crediting wallets. Dodo retries failed webhooks, and this prevents double-credits.
+  </Card>
+  <Card title="Check → Generate → Debit" icon="shield">
+    Always check wallet balance before calling ElevenLabs. Only debit after a successful generation. Return 402 to trigger the upsell modal.
+  </Card>
+</CardGroup>
+
+---
+
+## Test vs Live Environment
+
+<Warning>
+**Important:** This cookbook uses **test environment** keys and URLs for demonstration purposes. Before going to production, you must switch to live credentials.
+</Warning>
+
+### Environment Differences
+
+| Aspect | Test Environment | Live Environment |
+|--------|------------------|------------------|
+| Base URL | `https://test.dodopayments.com` | `https://live.dodopayments.com` |
+| API Keys | Start with `sk_test_` | Start with `sk_live_` |
+| Payments | Simulated (no real charges) | Real money transactions |
+| Test Cards | `4242 4242 4242 4242` works | Real credit cards only |
+| Dashboard | [test.dodopayments.com](https://test.dodopayments.com) | [dashboard.dodopayments.com](https://dashboard.dodopayments.com) |
+
+### Switching to Production
+
+1. **Create live products** in the [Dodo Payments Dashboard](https://dashboard.dodopayments.com)
+2. **Generate a live API key** from the dashboard
+3. **Update environment variables** in Vercel:
+   ```bash
+   DODO_PAYMENTS_API_KEY=sk_live_your_live_key
+   DODO_ENV=live
+   ```
+4. **Update product IDs** in `api/checkout.js` with your live product IDs
+5. **Test with a real card** (you can refund test purchases)
+
+<Tip>
+**Recommended Setup:**
+- **Development/Staging:** Use `test` environment with test API keys
+- **Production:** Use `live` environment with live API keys
+
+Set `DODO_ENV=test_mode` in your staging deployment and `DODO_ENV=live_mode` in production. The SDK automatically switches the base URL based on this variable.
 </Tip>
+
+---
+
+## Need Help?
+
+<CardGroup cols={3}>
+  <Card title="Dodo Payments Docs" icon="book" href="https://docs.dodopayments.com">
+    Official API documentation
+  </Card>
+  <Card title="ElevenLabs Docs" icon="microphone" href="https://docs.elevenlabs.io">
+    Text-to-speech API reference
+  </Card>
+  <Card title="Vercel Docs" icon="triangle" href="https://vercel.com/docs">
+    Deployment and serverless functions
+  </Card>
+</CardGroup>
